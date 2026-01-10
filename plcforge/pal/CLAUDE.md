@@ -29,11 +29,12 @@ plc = DeviceFactory.create(ip="192.168.1.10", vendor=Vendor.ALLEN_BRADLEY, slot=
 
 **Vendor Auto-Detection:**
 - Probes each vendor's protocol in sequence
-- Siemens S7: COTP connection request on TCP port 102
-- Allen-Bradley: EtherNet/IP List Identity on TCP port 44818
-- Omron: FINS probe on UDP port 9600
-- Delta: Modbus on TCP port 502
+- Siemens S7: COTP connection request on TCP port 102 (TPKT/COTP headers)
+- Allen-Bradley: EtherNet/IP List Identity on TCP port 44818 (command 0x63)
+- Omron: FINS probe on UDP port 9600 (FINS header 0x80)
+- Delta: Modbus read on TCP port 502 (Modbus TCP frame)
 - Returns `Vendor.UNKNOWN` if all probes fail
+- Probe methods: `_probe_siemens()`, `_probe_allen_bradley()`, `_probe_omron()`, `_probe_delta()`
 
 **Factory Pattern:**
 - `DeviceFactory.register_driver(vendor, driver_class)` - Register new drivers
@@ -49,8 +50,9 @@ plc = DeviceFactory.create(ip="192.168.1.10", vendor=Vendor.ALLEN_BRADLEY, slot=
 - `Vendor.UNKNOWN` - Detection failed
 
 **Discovery:**
-- `DiscoveredDevice` dataclass: ip, vendor, model, name, mac_address
+- `DiscoveredDevice` dataclass: ip, vendor, model, name, mac_address, additional_info
 - Used by network scanning features
+- `NetworkScanner` class for subnet scanning
 <!-- END AUTO-MANAGED -->
 
 <!-- AUTO-MANAGED: dependencies -->

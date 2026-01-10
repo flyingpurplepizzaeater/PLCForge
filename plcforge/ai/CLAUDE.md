@@ -41,10 +41,15 @@ ai/
 - Output format: explanation → code block → safety considerations
 
 **Safety Analysis:**
-- Returns list of `SafetyIssue` objects
+- Returns list of `SafetyIssue` objects (or dicts with severity, message, line_number, suggestion)
 - Severity levels: "critical", "warning", "info"
 - Includes line numbers and suggestions
 - Checks for emergency stop handling, edge cases, error conditions
+
+**Response Parsing:**
+- Extract code from markdown code blocks in LLM responses
+- Supports fence format: ```language\ncode\n```
+- Parse explanation and safety sections from response text
 <!-- END AUTO-MANAGED -->
 
 <!-- AUTO-MANAGED: dependencies -->

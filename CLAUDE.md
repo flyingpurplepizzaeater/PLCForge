@@ -60,8 +60,15 @@ plcforge/
 │   └── __init__.py          # Audit logging, authorization
 ├── code/
 │   └── __init__.py          # PLC code representations
-└── utils/
-    └── __init__.py          # Utility functions
+├── utils/
+│   └── __init__.py          # Utility functions
+└── tests/
+    ├── __init__.py          # Test suite marker
+    ├── conftest.py          # Pytest fixtures (mock devices, clients, sample data)
+    ├── test_ai.py           # AI code generation tests
+    ├── test_drivers.py      # Driver implementation tests
+    ├── test_pal.py          # Protocol Abstraction Layer tests
+    └── test_recovery.py     # Password recovery engine tests
 ```
 
 **Design Layers:**
@@ -133,6 +140,14 @@ plcforge/
 - Called before launching GUI or CLI
 - Ensures sys.path includes application directory
 
+**Testing Patterns:**
+- Pytest fixtures in `conftest.py` for all vendors (mock clients, device info, protection status)
+- Mock vendor libraries: `mock_snap7_client`, `mock_pycomm3_plc`, `mock_modbus_client`, `mock_fins_client`
+- Patch driver imports with `@patch("plcforge.drivers.vendor.module.Library")`
+- `MockPLCDevice` class for testing PAL without real hardware
+- Sample TIA Portal XML and temp project files via `tmp_path` fixture
+- Test authorization with `patch.object(engine, "_confirm_authorization", return_value=True)`
+
 **Version Control:**
 - `.gitignore` excludes Python artifacts (`__pycache__/`, `*.pyc`, `*.egg-info/`)
 - Virtual environments ignored (`venv/`, `.venv/`, `ENV/`)
@@ -165,6 +180,10 @@ plcforge/
 **File Parsing:**
 - `zipfile`, `xml.etree` - TIA Portal .ap files
 - `olefile>=0.46` - Legacy project formats
+
+**Testing:**
+- `pytest>=7.0` - Test framework
+- `unittest.mock` - Mocking (standard library)
 <!-- END AUTO-MANAGED -->
 
 <!-- MANUAL -->

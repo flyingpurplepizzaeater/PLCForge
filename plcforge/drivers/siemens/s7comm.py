@@ -56,15 +56,18 @@ class S7BlockType(IntEnum):
     SFB = 0x46
 
 
-# Memory area mapping
-MEMORY_AREA_MAP = {
-    MemoryArea.INPUT: Areas.PE,
-    MemoryArea.OUTPUT: Areas.PA,
-    MemoryArea.MEMORY: Areas.MK,
-    MemoryArea.DATA: Areas.DB,
-    MemoryArea.TIMER: Areas.TM,
-    MemoryArea.COUNTER: Areas.CT,
-}
+# Memory area mapping (only if snap7 available)
+if SNAP7_AVAILABLE:
+    MEMORY_AREA_MAP = {
+        MemoryArea.INPUT: Areas.PE,
+        MemoryArea.OUTPUT: Areas.PA,
+        MemoryArea.MEMORY: Areas.MK,
+        MemoryArea.DATA: Areas.DB,
+        MemoryArea.TIMER: Areas.TM,
+        MemoryArea.COUNTER: Areas.CT,
+    }
+else:
+    MEMORY_AREA_MAP = {}
 
 
 class SiemensS7Driver(PLCDevice):
