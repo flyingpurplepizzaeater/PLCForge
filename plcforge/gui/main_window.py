@@ -10,26 +10,50 @@ PyQt6-based main application window with:
 """
 
 import sys
-from typing import Optional, Dict, Any
 from pathlib import Path
 
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtGui import QAction, QColor
 from PyQt6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QSplitter, QTreeWidget, QTreeWidgetItem, QTextEdit, QTabWidget,
-    QToolBar, QStatusBar, QMenuBar, QMenu, QFileDialog, QMessageBox,
-    QDialog, QDialogButtonBox, QLabel, QLineEdit, QComboBox,
-    QCheckBox, QProgressBar, QGroupBox, QFormLayout, QPushButton,
-    QTableWidget, QTableWidgetItem, QHeaderView, QDockWidget
+    QApplication,
+    QCheckBox,
+    QComboBox,
+    QDialog,
+    QDialogButtonBox,
+    QDockWidget,
+    QFileDialog,
+    QFormLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QHeaderView,
+    QLabel,
+    QLineEdit,
+    QMainWindow,
+    QMessageBox,
+    QProgressBar,
+    QPushButton,
+    QSplitter,
+    QStatusBar,
+    QTableWidget,
+    QTableWidgetItem,
+    QTabWidget,
+    QTextEdit,
+    QToolBar,
+    QTreeWidget,
+    QTreeWidgetItem,
+    QVBoxLayout,
+    QWidget,
 )
-from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
-from PyQt6.QtGui import QAction, QIcon, QFont, QColor
 
-from plcforge.gui.themes import ThemeManager, Theme, StructuredTextHighlighter
-from plcforge.pal.unified_api import DeviceFactory, UnifiedPLC, Vendor
-from plcforge.drivers.base import PLCMode, DeviceInfo
+from plcforge.gui.themes import Theme, ThemeManager
+from plcforge.pal.unified_api import DeviceFactory, UnifiedPLC
 from plcforge.recovery.engine import (
-    RecoveryEngine, RecoveryTarget, RecoveryConfig,
-    RecoveryMethod, RecoveryProgress, RecoveryResult, RecoveryStatus
+    RecoveryConfig,
+    RecoveryEngine,
+    RecoveryMethod,
+    RecoveryProgress,
+    RecoveryStatus,
+    RecoveryTarget,
 )
 from plcforge.security.audit_log import get_logger
 
@@ -42,8 +66,8 @@ class PLCForgeMainWindow(QMainWindow):
         self.setWindowTitle("PLCForge - Multi-Vendor PLC Programming")
         self.setMinimumSize(1200, 800)
 
-        self._connected_devices: Dict[str, UnifiedPLC] = {}
-        self._current_project: Optional[Path] = None
+        self._connected_devices: dict[str, UnifiedPLC] = {}
+        self._current_project: Path | None = None
         self._audit_logger = get_logger()
         self._theme_manager = ThemeManager(QApplication.instance())
         self._highlighters = {}
@@ -214,7 +238,7 @@ class PLCForgeMainWindow(QMainWindow):
         file_menu.addAction(exit_action)
 
         # Edit menu
-        edit_menu = menubar.addMenu("&Edit")
+        menubar.addMenu("&Edit")
         # Standard edit actions would go here
 
         # View menu
@@ -927,7 +951,7 @@ class NetworkScannerDialog(QDialog):
         self.setMinimumSize(800, 600)
 
         from plcforge.security.network_scanner import (
-            NetworkScanner, generate_security_report, RiskLevel
+            NetworkScanner,
         )
         self._scanner = NetworkScanner()
         self._scan_result = None
@@ -1079,7 +1103,6 @@ class NetworkScannerDialog(QDialog):
 
             # Color code based on issues
             if device.security_issues:
-                from plcforge.security.network_scanner import RiskLevel
                 max_risk = max(i.risk_level.value for i in device.security_issues)
                 if max_risk == "critical":
                     color = QColor(255, 100, 100)

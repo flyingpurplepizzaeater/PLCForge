@@ -4,24 +4,23 @@ Omron FINS Protocol Driver
 Supports Omron CP/CJ/CS series PLCs using FINS protocol.
 """
 
-from typing import Any, Dict, List, Optional, Tuple
-from datetime import datetime
 import socket
 import struct
+from datetime import datetime
+from typing import Any
 
 from plcforge.drivers.base import (
-    PLCDevice,
-    DeviceInfo,
-    ProtectionStatus,
-    MemoryArea,
-    PLCMode,
     AccessLevel,
-    BlockType,
-    BlockInfo,
     Block,
+    BlockInfo,
+    BlockType,
+    DeviceInfo,
+    MemoryArea,
+    PLCDevice,
+    PLCMode,
     PLCProgram,
+    ProtectionStatus,
     TagValue,
-    CodeLanguage,
 )
 
 
@@ -54,7 +53,7 @@ class FINSClient:
     def __init__(self, host: str, port: int = 9600):
         self.host = host
         self.port = port
-        self.sock: Optional[socket.socket] = None
+        self.sock: socket.socket | None = None
         self.local_node = 0
         self.remote_node = 0
         self.sid = 0
@@ -106,7 +105,7 @@ class FINSClient:
 
         return header + cmd_bytes + data
 
-    def _send_command(self, command: int, data: bytes = b'') -> Tuple[int, bytes]:
+    def _send_command(self, command: int, data: bytes = b'') -> tuple[int, bytes]:
         """Send FINS command and receive response"""
         packet = self._build_header(command, data)
 
@@ -157,7 +156,7 @@ class FINSClient:
 
         return end_code == 0
 
-    def controller_data_read(self) -> Dict[str, Any]:
+    def controller_data_read(self) -> dict[str, Any]:
         """Read controller data"""
         end_code, response = self._send_command(self.CMD_CONTROLLER_DATA_READ, b'')
 
@@ -169,7 +168,7 @@ class FINSClient:
             'version': response[20:40].decode('ascii', errors='ignore').strip(),
         }
 
-    def controller_status_read(self) -> Dict[str, Any]:
+    def controller_status_read(self) -> dict[str, Any]:
         """Read controller status"""
         end_code, response = self._send_command(self.CMD_CONTROLLER_STATUS_READ, b'')
 
@@ -240,8 +239,8 @@ class OmronFINSDriver(PLCDevice):
 
     def __init__(self):
         super().__init__()
-        self._client: Optional[FINSClient] = None
-        self._ip: Optional[str] = None
+        self._client: FINSClient | None = None
+        self._ip: str | None = None
         self._port: int = 9600
 
     def connect(self, ip: str, **kwargs) -> bool:
@@ -367,7 +366,7 @@ class OmronFINSDriver(PLCDevice):
             self._last_error = str(e)
             return False
 
-    def _parse_address(self, address: str) -> Dict[str, Any]:
+    def _parse_address(self, address: str) -> dict[str, Any]:
         """Parse Omron address format"""
         address = address.upper().strip()
         result = {
@@ -425,7 +424,7 @@ class OmronFINSDriver(PLCDevice):
 
         return result
 
-    def _read_by_address(self, addr_info: Dict[str, Any]) -> Any:
+    def _read_by_address(self, addr_info: dict[str, Any]) -> Any:
         """Read value by parsed address"""
         data = self._client.memory_area_read(
             addr_info['fins_area'],
@@ -440,7 +439,7 @@ class OmronFINSDriver(PLCDevice):
 
         return word_value
 
-    def _write_by_address(self, addr_info: Dict[str, Any], value: Any) -> bool:
+    def _write_by_address(self, addr_info: dict[str, Any], value: Any) -> bool:
         """Write value by parsed address"""
         if addr_info['bit'] is not None:
             # Read-modify-write for bit access
@@ -476,7 +475,7 @@ class OmronFINSDriver(PLCDevice):
         self._last_error = "Program download requires CX-Programmer"
         return False
 
-    def get_block_list(self) -> List[BlockInfo]:
+    def get_block_list(self) -> list[BlockInfo]:
         """Get block list - not available via FINS"""
         return []
 
@@ -529,7 +528,7 @@ class OmronFINSDriver(PLCDevice):
         """Get access level"""
         return AccessLevel.FULL
 
-    def get_diagnostics(self) -> Dict[str, Any]:
+    def get_diagnostics(self) -> dict[str, Any]:
         """Get diagnostics"""
         try:
             status = self._client.controller_status_read()

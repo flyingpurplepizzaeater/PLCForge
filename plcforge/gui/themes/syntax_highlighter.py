@@ -9,14 +9,10 @@ Provides syntax highlighting for:
 """
 
 import re
-from typing import List, Tuple, Optional, Pattern
+from re import Pattern
 
+from PyQt6.QtGui import QColor, QFont, QSyntaxHighlighter, QTextCharFormat, QTextDocument
 from PyQt6.QtWidgets import QTextEdit
-from PyQt6.QtGui import (
-    QSyntaxHighlighter, QTextCharFormat, QTextDocument,
-    QColor, QFont, QBrush
-)
-from PyQt6.QtCore import Qt
 
 from plcforge.gui.themes.theme_manager import ThemeManager
 
@@ -27,7 +23,7 @@ class BasePLCHighlighter(QSyntaxHighlighter):
     def __init__(self, parent: QTextDocument = None):
         super().__init__(parent)
         self._theme_manager = ThemeManager()
-        self._rules: List[Tuple[Pattern, QTextCharFormat]] = []
+        self._rules: list[tuple[Pattern, QTextCharFormat]] = []
         self._setup_formats()
         self._setup_rules()
 
@@ -353,7 +349,7 @@ class FunctionBlockHighlighter(BasePLCHighlighter):
         self._rules.append((re.compile(r'//.*$'), self.comment_format))
 
 
-def apply_highlighter(editor: QTextEdit, language: str) -> Optional[BasePLCHighlighter]:
+def apply_highlighter(editor: QTextEdit, language: str) -> BasePLCHighlighter | None:
     """
     Apply appropriate syntax highlighter to an editor.
 

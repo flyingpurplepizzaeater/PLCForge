@@ -6,31 +6,29 @@ Uses pymodbus library for Modbus TCP/RTU communication.
 """
 
 import struct
-from typing import Any, Dict, List, Optional, Tuple, Union
-from dataclasses import dataclass
 from enum import IntEnum
+from typing import Any
 
 try:
-    from pymodbus.client import ModbusTcpClient, ModbusSerialClient
+    from pymodbus.client import ModbusSerialClient, ModbusTcpClient
     from pymodbus.constants import Endian
-    from pymodbus.payload import BinaryPayloadDecoder, BinaryPayloadBuilder
+    from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder
     PYMODBUS_AVAILABLE = True
 except ImportError:
     PYMODBUS_AVAILABLE = False
 
 from plcforge.drivers.base import (
-    PLCDevice,
-    DeviceInfo,
-    ProtectionStatus,
-    MemoryArea,
-    PLCMode,
     AccessLevel,
-    BlockType,
-    BlockInfo,
     Block,
+    BlockInfo,
+    BlockType,
+    DeviceInfo,
+    MemoryArea,
+    PLCDevice,
+    PLCMode,
     PLCProgram,
+    ProtectionStatus,
     TagValue,
-    CodeLanguage,
 )
 
 
@@ -83,13 +81,13 @@ class SchneiderModbusDriver(PLCDevice):
             raise ImportError(
                 "pymodbus library not installed. Install with: pip install pymodbus"
             )
-        self._client: Optional[ModbusTcpClient] = None
-        self._ip: Optional[str] = None
+        self._client: ModbusTcpClient | None = None
+        self._ip: str | None = None
         self._port: int = self.DEFAULT_TCP_PORT
         self._unit_id: int = self.DEFAULT_UNIT_ID
         self._timeout: float = 5.0
         self._use_rtu: bool = False
-        self._serial_port: Optional[str] = None
+        self._serial_port: str | None = None
 
     @property
     def vendor(self) -> str:
@@ -519,7 +517,7 @@ class SchneiderModbusDriver(PLCDevice):
             self._last_error = str(e)
             return False
 
-    def _parse_address(self, address: str) -> Tuple[str, int, Optional[int]]:
+    def _parse_address(self, address: str) -> tuple[str, int, int | None]:
         """
         Parse Schneider address format.
 
@@ -551,7 +549,7 @@ class SchneiderModbusDriver(PLCDevice):
         start_address: int,
         count: int,
         register_type: str = "holding"
-    ) -> List[int]:
+    ) -> list[int]:
         """Read multiple registers efficiently."""
         if not self._client or not self._connected:
             raise ConnectionError("Not connected")
@@ -579,7 +577,7 @@ class SchneiderModbusDriver(PLCDevice):
     def write_multiple_registers(
         self,
         start_address: int,
-        values: List[int]
+        values: list[int]
     ) -> bool:
         """Write multiple registers efficiently."""
         if not self._client or not self._connected:
@@ -600,7 +598,7 @@ class SchneiderModbusDriver(PLCDevice):
         """Authenticate (Modbus has no standard authentication)."""
         return True
 
-    def list_blocks(self, block_type: Optional[BlockType] = None) -> List[BlockInfo]:
+    def list_blocks(self, block_type: BlockType | None = None) -> list[BlockInfo]:
         """List program blocks (not supported via Modbus)."""
         return []
 
@@ -640,10 +638,10 @@ class SchneiderModbusDriver(PLCDevice):
         """Get current access level."""
         return AccessLevel.READ_WRITE
 
-    def get_block(self, block_type: BlockType, number: int) -> Optional[Block]:
+    def get_block(self, block_type: BlockType, number: int) -> Block | None:
         """Get block (not supported via Modbus)."""
         return None
 
-    def get_block_list(self, block_type: Optional[BlockType] = None) -> List[BlockInfo]:
+    def get_block_list(self, block_type: BlockType | None = None) -> list[BlockInfo]:
         """Get list of blocks (not supported via Modbus)."""
         return []

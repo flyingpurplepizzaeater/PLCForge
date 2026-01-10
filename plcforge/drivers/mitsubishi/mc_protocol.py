@@ -7,23 +7,22 @@ Uses SLMP (Seamless Message Protocol) over TCP/UDP.
 
 import socket
 import struct
-from typing import Any, Dict, List, Optional, Tuple, Union
 from dataclasses import dataclass
 from enum import IntEnum
+from typing import Any
 
 from plcforge.drivers.base import (
-    PLCDevice,
-    DeviceInfo,
-    ProtectionStatus,
-    MemoryArea,
-    PLCMode,
     AccessLevel,
-    BlockType,
-    BlockInfo,
     Block,
+    BlockInfo,
+    BlockType,
+    DeviceInfo,
+    MemoryArea,
+    PLCDevice,
+    PLCMode,
     PLCProgram,
+    ProtectionStatus,
     TagValue,
-    CodeLanguage,
 )
 
 
@@ -109,8 +108,8 @@ class MitsubishiMCDriver(PLCDevice):
 
     def __init__(self):
         super().__init__()
-        self._socket: Optional[socket.socket] = None
-        self._ip: Optional[str] = None
+        self._socket: socket.socket | None = None
+        self._ip: str | None = None
         self._port: int = 5000  # Default MC Protocol port
         self._timeout: float = 5.0
         self._frame_type: str = "3E"
@@ -168,17 +167,17 @@ class MitsubishiMCDriver(PLCDevice):
 
         return frame
 
-    def _parse_response(self, response: bytes) -> Tuple[int, bytes]:
+    def _parse_response(self, response: bytes) -> tuple[int, bytes]:
         """Parse MC Protocol response."""
         if len(response) < 11:
             raise ValueError("Response too short")
 
         # Parse header
-        subheader = struct.unpack('<H', response[0:2])[0]
-        network_no = response[2]
-        pc_no = response[3]
-        module_io = struct.unpack('<H', response[4:6])[0]
-        module_station = response[6]
+        struct.unpack('<H', response[0:2])[0]
+        response[2]
+        response[3]
+        struct.unpack('<H', response[4:6])[0]
+        response[6]
         data_length = struct.unpack('<H', response[7:9])[0]
         end_code = struct.unpack('<H', response[9:11])[0]
 
@@ -218,7 +217,7 @@ class MitsubishiMCDriver(PLCDevice):
                 serial_number="",
                 ip_address=self._ip or "",
             )
-        except Exception as e:
+        except Exception:
             return DeviceInfo(
                 vendor="Mitsubishi",
                 model="Unknown",
@@ -323,7 +322,7 @@ class MitsubishiMCDriver(PLCDevice):
             self._last_error = str(e)
             return False
 
-    def _parse_tag(self, tag: str) -> Tuple[str, int]:
+    def _parse_tag(self, tag: str) -> tuple[str, int]:
         """Parse tag name into device and address."""
         # Examples: D100, M0, X0, Y10
         tag = tag.upper()
@@ -361,7 +360,7 @@ class MitsubishiMCDriver(PLCDevice):
         """Authenticate with password (not typically required for MC Protocol)."""
         return True
 
-    def list_blocks(self, block_type: Optional[BlockType] = None) -> List[BlockInfo]:
+    def list_blocks(self, block_type: BlockType | None = None) -> list[BlockInfo]:
         """List program blocks (not supported in MC Protocol)."""
         return []
 
@@ -401,10 +400,10 @@ class MitsubishiMCDriver(PLCDevice):
         """Get current access level."""
         return AccessLevel.READ_WRITE
 
-    def get_block(self, block_type: BlockType, number: int) -> Optional[Block]:
+    def get_block(self, block_type: BlockType, number: int) -> Block | None:
         """Get block (not supported via MC Protocol)."""
         return None
 
-    def get_block_list(self, block_type: Optional[BlockType] = None) -> List[BlockInfo]:
+    def get_block_list(self, block_type: BlockType | None = None) -> list[BlockInfo]:
         """Get list of blocks (not supported via MC Protocol)."""
         return []

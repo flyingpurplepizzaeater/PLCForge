@@ -5,30 +5,29 @@ Supports Delta DVP PLCs using Modbus TCP/RTU protocol.
 Uses pymodbus library for communication.
 """
 
-from typing import Any, Dict, List, Optional
-from datetime import datetime
 import struct
+from datetime import datetime
+from typing import Any
 
 try:
-    from pymodbus.client import ModbusTcpClient, ModbusSerialClient
+    from pymodbus.client import ModbusSerialClient, ModbusTcpClient
     from pymodbus.exceptions import ModbusException
     PYMODBUS_AVAILABLE = True
 except ImportError:
     PYMODBUS_AVAILABLE = False
 
 from plcforge.drivers.base import (
-    PLCDevice,
-    DeviceInfo,
-    ProtectionStatus,
-    MemoryArea,
-    PLCMode,
     AccessLevel,
-    BlockType,
-    BlockInfo,
     Block,
+    BlockInfo,
+    BlockType,
+    DeviceInfo,
+    MemoryArea,
+    PLCDevice,
+    PLCMode,
     PLCProgram,
+    ProtectionStatus,
     TagValue,
-    CodeLanguage,
 )
 
 
@@ -72,8 +71,8 @@ class DeltaDVPDriver(PLCDevice):
                 "pymodbus library not installed. Install with: pip install pymodbus"
             )
 
-        self._client: Optional[ModbusTcpClient] = None
-        self._ip: Optional[str] = None
+        self._client: ModbusTcpClient | None = None
+        self._ip: str | None = None
         self._port: int = 502
         self._unit_id: int = 1
         self._connection_type: str = "tcp"
@@ -311,7 +310,7 @@ class DeltaDVPDriver(PLCDevice):
             self._last_error = str(e)
             return False
 
-    def _parse_address(self, address: str) -> Dict[str, Any]:
+    def _parse_address(self, address: str) -> dict[str, Any]:
         """Parse Delta address format"""
         address = address.upper().strip()
         result = {
@@ -385,7 +384,7 @@ class DeltaDVPDriver(PLCDevice):
 
         return result
 
-    def _read_by_type(self, addr_info: Dict[str, Any]) -> Any:
+    def _read_by_type(self, addr_info: dict[str, Any]) -> Any:
         """Read value based on address type"""
         if addr_info['is_bit']:
             # Read coil
@@ -408,7 +407,7 @@ class DeltaDVPDriver(PLCDevice):
                 raise Exception(str(result))
             return result.registers[0]
 
-    def _write_by_type(self, addr_info: Dict[str, Any], value: Any) -> bool:
+    def _write_by_type(self, addr_info: dict[str, Any], value: Any) -> bool:
         """Write value based on address type"""
         try:
             if addr_info['is_bit']:
@@ -441,7 +440,7 @@ class DeltaDVPDriver(PLCDevice):
         self._last_error = "Program download requires ISPSoft"
         return False
 
-    def get_block_list(self) -> List[BlockInfo]:
+    def get_block_list(self) -> list[BlockInfo]:
         """Get block list - not available via Modbus"""
         return []
 
@@ -504,7 +503,7 @@ class DeltaDVPDriver(PLCDevice):
         """Get access level"""
         return AccessLevel.FULL  # No runtime protection via Modbus
 
-    def get_diagnostics(self) -> Dict[str, Any]:
+    def get_diagnostics(self) -> dict[str, Any]:
         """Get diagnostics"""
         return {
             'connected': self._connected,

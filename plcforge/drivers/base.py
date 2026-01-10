@@ -7,9 +7,9 @@ This enables the Protocol Abstraction Layer (PAL) to work uniformly across vendo
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from enum import Enum, auto
-from typing import Any, Dict, List, Optional, Union
 from datetime import datetime
+from enum import Enum
+from typing import Any
 
 
 class MemoryArea(Enum):
@@ -70,10 +70,10 @@ class DeviceInfo:
     firmware: str
     serial: str
     name: str
-    ip_address: Optional[str] = None
-    rack: Optional[int] = None
-    slot: Optional[int] = None
-    additional_info: Dict[str, Any] = field(default_factory=dict)
+    ip_address: str | None = None
+    rack: int | None = None
+    slot: int | None = None
+    additional_info: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -84,7 +84,7 @@ class ProtectionStatus:
     block_protected: bool = False
     know_how_protected: bool = False
     access_level: AccessLevel = AccessLevel.FULL
-    protection_details: Dict[str, Any] = field(default_factory=dict)
+    protection_details: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -96,9 +96,9 @@ class BlockInfo:
     language: CodeLanguage
     size: int
     protected: bool = False
-    timestamp: Optional[datetime] = None
-    author: Optional[str] = None
-    comment: Optional[str] = None
+    timestamp: datetime | None = None
+    author: str | None = None
+    comment: str | None = None
 
 
 @dataclass
@@ -107,8 +107,8 @@ class TagValue:
     name: str
     value: Any
     data_type: str
-    address: Optional[str] = None
-    timestamp: Optional[datetime] = None
+    address: str | None = None
+    timestamp: datetime | None = None
     quality: str = "good"
 
 
@@ -117,10 +117,10 @@ class PLCProgram:
     """Container for a complete PLC program"""
     vendor: str
     model: str
-    blocks: List['Block'] = field(default_factory=list)
-    tags: List[TagValue] = field(default_factory=list)
-    configuration: Dict[str, Any] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    blocks: list['Block'] = field(default_factory=list)
+    tags: list[TagValue] = field(default_factory=list)
+    configuration: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def save(self, path: str) -> None:
         """Save program to file"""
@@ -137,9 +137,9 @@ class PLCProgram:
 class Block:
     """A program block with code content"""
     info: BlockInfo
-    source_code: Optional[str] = None      # Human-readable source
-    compiled_code: Optional[bytes] = None  # Compiled/binary form
-    interface: Dict[str, Any] = field(default_factory=dict)  # I/O interface
+    source_code: str | None = None      # Human-readable source
+    compiled_code: bytes | None = None  # Compiled/binary form
+    interface: dict[str, Any] = field(default_factory=dict)  # I/O interface
 
 
 class PLCDevice(ABC):
@@ -152,11 +152,11 @@ class PLCDevice(ABC):
 
     def __init__(self):
         self._connected = False
-        self._device_info: Optional[DeviceInfo] = None
-        self._last_error: Optional[str] = None
+        self._device_info: DeviceInfo | None = None
+        self._last_error: str | None = None
 
     @property
-    def last_error(self) -> Optional[str]:
+    def last_error(self) -> str | None:
         """Get the last error message"""
         return self._last_error
 
@@ -272,7 +272,7 @@ class PLCDevice(ABC):
         """
         pass
 
-    def read_tags(self, tag_names: List[str]) -> List[TagValue]:
+    def read_tags(self, tag_names: list[str]) -> list[TagValue]:
         """
         Read multiple tags at once (default: sequential reads).
 
@@ -280,7 +280,7 @@ class PLCDevice(ABC):
         """
         return [self.read_tag(name) for name in tag_names]
 
-    def write_tags(self, tags: Dict[str, Any]) -> bool:
+    def write_tags(self, tags: dict[str, Any]) -> bool:
         """
         Write multiple tags at once (default: sequential writes).
 
@@ -316,7 +316,7 @@ class PLCDevice(ABC):
         pass
 
     @abstractmethod
-    def get_block_list(self) -> List[BlockInfo]:
+    def get_block_list(self) -> list[BlockInfo]:
         """
         Get list of all program blocks in the PLC.
 
@@ -413,7 +413,7 @@ class PLCDevice(ABC):
     # Diagnostic Methods
     # ===================
 
-    def get_diagnostics(self) -> Dict[str, Any]:
+    def get_diagnostics(self) -> dict[str, Any]:
         """
         Get diagnostic information from PLC.
 
@@ -421,7 +421,7 @@ class PLCDevice(ABC):
         """
         return {}
 
-    def get_cpu_state(self) -> Dict[str, Any]:
+    def get_cpu_state(self) -> dict[str, Any]:
         """
         Get CPU state information.
 
@@ -452,7 +452,7 @@ class ProjectFileParser(ABC):
         pass
 
     @abstractmethod
-    def get_protection_info(self, file_path: str) -> Dict[str, Any]:
+    def get_protection_info(self, file_path: str) -> dict[str, Any]:
         """
         Extract password/protection information from project file.
 
@@ -465,7 +465,7 @@ class ProjectFileParser(ABC):
         pass
 
     @abstractmethod
-    def supported_extensions(self) -> List[str]:
+    def supported_extensions(self) -> list[str]:
         """
         Get list of supported file extensions.
 

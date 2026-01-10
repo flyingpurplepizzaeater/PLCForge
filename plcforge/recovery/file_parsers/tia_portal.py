@@ -4,12 +4,12 @@ TIA Portal Project File Password Parser
 Extracts password information from TIA Portal project files (.ap13-.ap20).
 """
 
-import zipfile
-import xml.etree.ElementTree as ET
-from typing import Any, Dict, List, Optional
-from pathlib import Path
 import hashlib
 import struct
+import xml.etree.ElementTree as ET
+import zipfile
+from pathlib import Path
+from typing import Any
 
 
 class TIAPortalPasswordParser:
@@ -28,7 +28,7 @@ class TIAPortalPasswordParser:
     ]
     vendor = "Siemens"
 
-    def extract_password(self, file_path: str, protection_type: str) -> Dict[str, Any]:
+    def extract_password(self, file_path: str, protection_type: str) -> dict[str, Any]:
         """
         Extract password information from TIA Portal project.
 
@@ -78,7 +78,7 @@ class TIAPortalPasswordParser:
 
         return result
 
-    def _extract_archived(self, file_path: str) -> Optional[str]:
+    def _extract_archived(self, file_path: str) -> str | None:
         """Extract .zap archive to temp location"""
         import gzip
         import tempfile
@@ -91,7 +91,7 @@ class TIAPortalPasswordParser:
         except Exception:
             return None
 
-    def _extract_project_password(self, zf: zipfile.ZipFile) -> Dict[str, Any]:
+    def _extract_project_password(self, zf: zipfile.ZipFile) -> dict[str, Any]:
         """Extract project-level password"""
         result = {
             'password': None,
@@ -132,7 +132,7 @@ class TIAPortalPasswordParser:
 
         return result
 
-    def _extract_cpu_password(self, zf: zipfile.ZipFile) -> Dict[str, Any]:
+    def _extract_cpu_password(self, zf: zipfile.ZipFile) -> dict[str, Any]:
         """Extract CPU protection password settings"""
         result = {
             'password': None,
@@ -168,7 +168,7 @@ class TIAPortalPasswordParser:
 
         return result
 
-    def _extract_block_passwords(self, zf: zipfile.ZipFile) -> Dict[str, Any]:
+    def _extract_block_passwords(self, zf: zipfile.ZipFile) -> dict[str, Any]:
         """Extract know-how protected block information"""
         result = {
             'password': None,
@@ -201,7 +201,7 @@ class TIAPortalPasswordParser:
 
         return result
 
-    def _parse_protection_xml(self, content: bytes) -> Dict[str, Any]:
+    def _parse_protection_xml(self, content: bytes) -> dict[str, Any]:
         """Parse protection XML file"""
         result = {}
 
@@ -229,7 +229,7 @@ class TIAPortalPasswordParser:
 
         return result
 
-    def _extract_hash_from_binary(self, content: bytes) -> Optional[Dict[str, Any]]:
+    def _extract_hash_from_binary(self, content: bytes) -> dict[str, Any] | None:
         """
         Extract password hash from binary file content.
 

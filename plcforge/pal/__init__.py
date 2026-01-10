@@ -6,8 +6,8 @@ Provides unified API for all PLC vendors.
 
 from plcforge.pal.unified_api import (
     DeviceFactory,
-    UnifiedPLC,
     NetworkScanner,
+    UnifiedPLC,
     Vendor,
     connect,
 )

@@ -5,29 +5,29 @@ Supports CompactLogix and ControlLogix PLCs using
 the pycomm3 library for CIP protocol communication.
 """
 
-from typing import Any, Dict, List, Optional
 from datetime import datetime
+from typing import Any
 
 try:
-    from pycomm3 import LogixDriver, CIPDriver
+    from pycomm3 import CIPDriver, LogixDriver
     from pycomm3.exceptions import CommError, RequestError
     PYCOMM3_AVAILABLE = True
 except ImportError:
     PYCOMM3_AVAILABLE = False
 
 from plcforge.drivers.base import (
-    PLCDevice,
-    DeviceInfo,
-    ProtectionStatus,
-    MemoryArea,
-    PLCMode,
     AccessLevel,
-    BlockType,
-    BlockInfo,
     Block,
-    PLCProgram,
-    TagValue,
+    BlockInfo,
+    BlockType,
     CodeLanguage,
+    DeviceInfo,
+    MemoryArea,
+    PLCDevice,
+    PLCMode,
+    PLCProgram,
+    ProtectionStatus,
+    TagValue,
 )
 
 
@@ -52,8 +52,8 @@ class AllenBradleyDriver(PLCDevice):
                 "pycomm3 library not installed. Install with: pip install pycomm3"
             )
 
-        self._plc: Optional[LogixDriver] = None
-        self._ip: Optional[str] = None
+        self._plc: LogixDriver | None = None
+        self._ip: str | None = None
         self._slot: int = 0
 
     def connect(self, ip: str, **kwargs) -> bool:
@@ -119,7 +119,7 @@ class AllenBradleyDriver(PLCDevice):
                     'device_type': info.get('device_type'),
                 }
             )
-        except Exception as e:
+        except Exception:
             return DeviceInfo(
                 vendor="Allen-Bradley",
                 model="Unknown Logix",
@@ -222,7 +222,7 @@ class AllenBradleyDriver(PLCDevice):
             self._last_error = str(e)
             return False
 
-    def read_tags(self, tag_names: List[str]) -> List[TagValue]:
+    def read_tags(self, tag_names: list[str]) -> list[TagValue]:
         """Read multiple tags in one request (optimized)"""
         try:
             results = self._plc.read(*tag_names)
@@ -247,11 +247,11 @@ class AllenBradleyDriver(PLCDevice):
             return [TagValue(name=n, value=None, data_type="Unknown", quality="bad")
                     for n in tag_names]
 
-    def write_tags(self, tags: Dict[str, Any]) -> bool:
+    def write_tags(self, tags: dict[str, Any]) -> bool:
         """Write multiple tags in one request (optimized)"""
         try:
             # Build list of (tag, value) tuples
-            writes = [(name, value) for name, value in tags.items()]
+            writes = list(tags.items())
             results = self._plc.write(*writes)
 
             # Check all results
@@ -263,7 +263,7 @@ class AllenBradleyDriver(PLCDevice):
             self._last_error = str(e)
             return False
 
-    def get_tag_list(self) -> List[Dict[str, Any]]:
+    def get_tag_list(self) -> list[dict[str, Any]]:
         """Get list of all tags in the PLC"""
         try:
             tags = self._plc.get_tag_list()
@@ -322,7 +322,7 @@ class AllenBradleyDriver(PLCDevice):
         self._last_error = "Full program download requires Studio 5000"
         return False
 
-    def get_block_list(self) -> List[BlockInfo]:
+    def get_block_list(self) -> list[BlockInfo]:
         """
         Get list of program blocks.
 
@@ -405,7 +405,7 @@ class AllenBradleyDriver(PLCDevice):
         """Get current access level"""
         return AccessLevel.FULL  # Assuming no restrictions without FT security
 
-    def get_diagnostics(self) -> Dict[str, Any]:
+    def get_diagnostics(self) -> dict[str, Any]:
         """Get diagnostic information"""
         try:
             info = self._plc.get_plc_info()

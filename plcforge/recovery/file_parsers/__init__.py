@@ -4,19 +4,19 @@ File Parsers for Password Extraction
 Parse vendor-specific project files to extract password information.
 """
 
-from typing import Dict, Any, List, Optional, Type
 from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import Any
 
 
 class PasswordFileParser(ABC):
     """Base class for file-based password extraction"""
 
-    supported_extensions: List[str] = []
+    supported_extensions: list[str] = []
     vendor: str = "Unknown"
 
     @abstractmethod
-    def extract_password(self, file_path: str, protection_type: str) -> Dict[str, Any]:
+    def extract_password(self, file_path: str, protection_type: str) -> dict[str, Any]:
         """
         Extract password or password hash from file.
 
@@ -46,16 +46,16 @@ class PasswordFileParser(ABC):
 
 
 # Registry of parsers
-_PARSERS: Dict[str, Type[PasswordFileParser]] = {}
+_PARSERS: dict[str, type[PasswordFileParser]] = {}
 
 
-def register_parser(parser_class: Type[PasswordFileParser]):
+def register_parser(parser_class: type[PasswordFileParser]):
     """Register a parser class"""
     for ext in parser_class.supported_extensions:
         _PARSERS[ext.lower()] = parser_class
 
 
-def get_parser(vendor: str, file_path: str) -> Optional[PasswordFileParser]:
+def get_parser(vendor: str, file_path: str) -> PasswordFileParser | None:
     """
     Get appropriate parser for a file.
 
@@ -80,7 +80,7 @@ def get_parser(vendor: str, file_path: str) -> Optional[PasswordFileParser]:
 
     # Try vendor-specific lookup
     vendor_lower = vendor.lower()
-    for registered_ext, parser_class in _PARSERS.items():
+    for _registered_ext, parser_class in _PARSERS.items():
         if vendor_lower in parser_class.vendor.lower():
             if last_ext in parser_class.supported_extensions:
                 return parser_class()

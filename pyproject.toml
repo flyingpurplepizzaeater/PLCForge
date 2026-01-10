@@ -86,7 +86,19 @@ target-version = ['py310', 'py311', 'py312']
 
 [tool.ruff]
 line-length = 100
-select = ["E", "F", "W", "I", "N", "UP", "B", "C4"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "C4"]
+ignore = [
+    "E501",   # Line too long (handled by formatter)
+    "F401",   # Unused imports (needed for conditional imports)
+    "E722",   # Bare except (acceptable in cleanup code)
+    "B904",   # Exception chaining (not always needed)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"plcforge/drivers/*" = ["F401"]  # Conditional imports for optional dependencies
+"plcforge/recovery/*" = ["N801"]  # Allow S7_xxx naming convention
 
 [tool.mypy]
 python_version = "3.10"

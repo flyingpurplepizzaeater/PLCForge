@@ -8,16 +8,14 @@ Orchestrates password recovery across multiple methods:
 - Vulnerability exploits
 """
 
-from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Union
-from datetime import datetime
-import threading
-import hashlib
 import itertools
 import string
 import time
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from typing import Any
 
 from plcforge.drivers.base import PLCDevice
 
@@ -46,37 +44,37 @@ class RecoveryTarget:
     vendor: str
     model: str
     protection_type: str  # "cpu", "project", "block"
-    file_path: Optional[str] = None
-    device: Optional[PLCDevice] = None
-    ip_address: Optional[str] = None
+    file_path: str | None = None
+    device: PLCDevice | None = None
+    ip_address: str | None = None
 
 
 @dataclass
 class RecoveryConfig:
     """Configuration for recovery operation"""
-    methods: List[RecoveryMethod] = field(default_factory=lambda: [RecoveryMethod.FILE_PARSE])
-    wordlist_path: Optional[str] = None
-    custom_wordlist: Optional[List[str]] = None
+    methods: list[RecoveryMethod] = field(default_factory=lambda: [RecoveryMethod.FILE_PARSE])
+    wordlist_path: str | None = None
+    custom_wordlist: list[str] | None = None
     max_attempts: int = 1_000_000
     charset: str = "alphanumeric"  # "numeric", "alpha", "alphanumeric", "all", "custom"
-    custom_charset: Optional[str] = None
+    custom_charset: str | None = None
     min_length: int = 1
     max_length: int = 8
     use_gpu: bool = False
     rate_limit_ms: int = 0  # Delay between online attempts
-    callback: Optional[Callable] = None  # Progress callback
+    callback: Callable | None = None  # Progress callback
 
 
 @dataclass
 class RecoveryResult:
     """Result of password recovery attempt"""
     status: RecoveryStatus
-    password: Optional[str] = None
-    method_used: Optional[RecoveryMethod] = None
+    password: str | None = None
+    method_used: RecoveryMethod | None = None
     attempts: int = 0
     duration_seconds: float = 0.0
-    error_message: Optional[str] = None
-    details: Dict[str, Any] = field(default_factory=dict)
+    error_message: str | None = None
+    details: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -88,7 +86,7 @@ class RecoveryProgress:
     current_password: str
     elapsed_seconds: float
     rate_per_second: float
-    estimated_remaining_seconds: Optional[float]
+    estimated_remaining_seconds: float | None
 
 
 class RecoveryEngine:
@@ -101,9 +99,9 @@ class RecoveryEngine:
     def __init__(self):
         self._running = False
         self._cancel_flag = False
-        self._current_method: Optional[RecoveryMethod] = None
-        self._progress_callback: Optional[Callable] = None
-        self._start_time: Optional[datetime] = None
+        self._current_method: RecoveryMethod | None = None
+        self._progress_callback: Callable | None = None
+        self._start_time: datetime | None = None
         self._attempts = 0
 
     def recover(
@@ -260,7 +258,7 @@ class RecoveryEngine:
             wordlist = config.custom_wordlist
         elif config.wordlist_path:
             try:
-                with open(config.wordlist_path, 'r', encoding='utf-8', errors='ignore') as f:
+                with open(config.wordlist_path, encoding='utf-8', errors='ignore') as f:
                     wordlist = [line.strip() for line in f if line.strip()]
             except Exception as e:
                 return RecoveryResult(
@@ -423,7 +421,7 @@ class RecoveryEngine:
                         method_used=RecoveryMethod.VULNERABILITY,
                         details={'exploit': exploit.__class__.__name__}
                     )
-            except Exception as e:
+            except Exception:
                 # Continue to next exploit
                 pass
 
@@ -470,7 +468,7 @@ class RecoveryEngine:
         else:
             return string.ascii_letters + string.digits
 
-    def _get_default_wordlist(self) -> List[str]:
+    def _get_default_wordlist(self) -> list[str]:
         """Get default industrial password wordlist"""
         # Common industrial/PLC passwords
         return [

@@ -4,10 +4,7 @@ Siemens S7-300 Password Recovery Exploits
 Exploits for recovering passwords from S7-300 series PLCs.
 """
 
-from typing import Any, Dict, List, Optional
-import struct
-
-from plcforge.drivers.base import PLCDevice
+from typing import Any
 
 
 class S7_300_SDBExtract:
@@ -48,7 +45,7 @@ class S7_300_SDBExtract:
 
         return True
 
-    def execute(self, target) -> Dict[str, Any]:
+    def execute(self, target) -> dict[str, Any]:
         """
         Execute the SDB extraction exploit.
 
@@ -97,7 +94,7 @@ class S7_300_SDBExtract:
 
         return result
 
-    def _extract_password(self, sdb_data: bytes) -> Optional[str]:
+    def _extract_password(self, sdb_data: bytes) -> str | None:
         """
         Extract password from SDB 7 data.
 
@@ -161,7 +158,7 @@ class S7_300_MemoryDump:
         info = target.device.get_device_info()
         return 's7-300' in info.model.lower() or 's7-31' in info.model.lower()
 
-    def execute(self, target) -> Dict[str, Any]:
+    def execute(self, target) -> dict[str, Any]:
         """
         Execute memory read exploit.
 
@@ -217,7 +214,7 @@ class S7_300_MemoryDump:
 
         return result
 
-    def _try_decode_password(self, data: bytes) -> Optional[str]:
+    def _try_decode_password(self, data: bytes) -> str | None:
         """Try to decode password from memory data"""
         # Try direct ASCII
         try:

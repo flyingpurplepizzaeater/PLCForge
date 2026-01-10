@@ -4,7 +4,7 @@ Siemens S7-400 Password Recovery Exploits
 Exploits for recovering passwords from S7-400 series PLCs.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class S7_400_SDBExtract:
@@ -38,7 +38,7 @@ class S7_400_SDBExtract:
 
         return 's7-400' in model or 's7-4' in model
 
-    def execute(self, target) -> Dict[str, Any]:
+    def execute(self, target) -> dict[str, Any]:
         """Execute SDB extraction for S7-400"""
         result = {
             'success': False,
@@ -79,7 +79,7 @@ class S7_400_SDBExtract:
 
         return result
 
-    def _extract_password(self, sdb_data: bytes, sdb_num: int) -> Optional[str]:
+    def _extract_password(self, sdb_data: bytes, sdb_num: int) -> str | None:
         """Extract password from SDB data"""
         # S7-400 SDB structure varies by version
         # Try multiple offsets
@@ -140,7 +140,7 @@ class S7_400_CPUInfoLeak:
         info = target.device.get_device_info()
         return 's7-400' in info.model.lower()
 
-    def execute(self, target) -> Dict[str, Any]:
+    def execute(self, target) -> dict[str, Any]:
         """Execute diagnostic buffer extraction"""
         result = {
             'success': False,

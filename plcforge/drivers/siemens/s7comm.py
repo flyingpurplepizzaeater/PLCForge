@@ -6,32 +6,32 @@ Uses python-snap7 library for low-level communication.
 """
 
 import struct
-from typing import Any, Dict, List, Optional, Tuple
 from datetime import datetime
 from enum import IntEnum
+from typing import Any
 
 try:
     import snap7
     from snap7.client import Client
     from snap7.types import Areas, WordLen
-    from snap7.util import get_bool, set_bool, get_int, set_int, get_real, set_real
+    from snap7.util import get_bool, get_int, get_real, set_bool, set_int, set_real
     SNAP7_AVAILABLE = True
 except ImportError:
     SNAP7_AVAILABLE = False
 
 from plcforge.drivers.base import (
-    PLCDevice,
-    DeviceInfo,
-    ProtectionStatus,
-    MemoryArea,
-    PLCMode,
     AccessLevel,
-    BlockType,
-    BlockInfo,
     Block,
-    PLCProgram,
-    TagValue,
+    BlockInfo,
+    BlockType,
     CodeLanguage,
+    DeviceInfo,
+    MemoryArea,
+    PLCDevice,
+    PLCMode,
+    PLCProgram,
+    ProtectionStatus,
+    TagValue,
 )
 
 
@@ -87,11 +87,11 @@ class SiemensS7Driver(PLCDevice):
         if not SNAP7_AVAILABLE:
             raise ImportError("python-snap7 library not installed. Install with: pip install python-snap7")
 
-        self._client: Optional[Client] = None
-        self._ip: Optional[str] = None
+        self._client: Client | None = None
+        self._ip: str | None = None
         self._rack: int = 0
         self._slot: int = 1
-        self._model: Optional[str] = None
+        self._model: str | None = None
 
     def connect(self, ip: str, **kwargs) -> bool:
         """
@@ -159,7 +159,7 @@ class SiemensS7Driver(PLCDevice):
                     'order_code': order_code.OrderCode.decode('utf-8').strip(),
                 }
             )
-        except Exception as e:
+        except Exception:
             return DeviceInfo(
                 vendor="Siemens",
                 model=self._model or "Unknown S7",
@@ -277,7 +277,7 @@ class SiemensS7Driver(PLCDevice):
             self._last_error = str(e)
             return False
 
-    def _parse_address(self, address: str) -> Dict[str, Any]:
+    def _parse_address(self, address: str) -> dict[str, Any]:
         """
         Parse S7 address string into components.
 
@@ -387,7 +387,7 @@ class SiemensS7Driver(PLCDevice):
 
         return result
 
-    def _read_by_address(self, addr_info: Dict[str, Any]) -> Any:
+    def _read_by_address(self, addr_info: dict[str, Any]) -> Any:
         """Read value using parsed address info"""
         area = addr_info['area']
         offset = addr_info['offset']
@@ -425,11 +425,11 @@ class SiemensS7Driver(PLCDevice):
         else:
             return bytes(data)
 
-    def _write_by_address(self, addr_info: Dict[str, Any], value: Any) -> bool:
+    def _write_by_address(self, addr_info: dict[str, Any], value: Any) -> bool:
         """Write value using parsed address info"""
         area = addr_info['area']
         offset = addr_info['offset']
-        size = addr_info['size']
+        addr_info['size']
         data_type = addr_info['type']
 
         # Convert value to bytes
@@ -489,7 +489,7 @@ class SiemensS7Driver(PLCDevice):
             try:
                 block = self.get_block(block_info.block_type, block_info.number)
                 program.blocks.append(block)
-            except Exception as e:
+            except Exception:
                 # Log error but continue with other blocks
                 pass
 
@@ -518,7 +518,7 @@ class SiemensS7Driver(PLCDevice):
         # This is a placeholder for the actual implementation
         raise NotImplementedError("Block download not yet implemented")
 
-    def get_block_list(self) -> List[BlockInfo]:
+    def get_block_list(self) -> list[BlockInfo]:
         """Get list of all program blocks"""
         blocks = []
 
@@ -577,7 +577,7 @@ class SiemensS7Driver(PLCDevice):
             raise ValueError(f"Unsupported block type: {block_type}")
 
         # Get block info
-        info = self._client.get_block_info(snap7_type, number)
+        self._client.get_block_info(snap7_type, number)
 
         # Upload block data
         data = self._client.full_upload(snap7_type, number)
@@ -600,7 +600,7 @@ class SiemensS7Driver(PLCDevice):
         try:
             self._client.plc_hot_start()
             return True
-        except Exception as e:
+        except Exception:
             try:
                 self._client.plc_cold_start()
                 return True
@@ -653,7 +653,7 @@ class SiemensS7Driver(PLCDevice):
         protection = self.get_protection_status()
         return protection.access_level
 
-    def get_diagnostics(self) -> Dict[str, Any]:
+    def get_diagnostics(self) -> dict[str, Any]:
         """Get diagnostic information"""
         try:
             return {

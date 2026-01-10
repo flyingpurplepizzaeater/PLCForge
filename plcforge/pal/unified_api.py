@@ -5,23 +5,17 @@ Provides a vendor-agnostic interface to interact with any supported PLC.
 Automatically handles vendor detection and driver selection.
 """
 
-from typing import Any, Dict, List, Optional, Type, Union
+import socket
 from dataclasses import dataclass
 from enum import Enum
-import socket
-import struct
+from typing import Any
 
 from plcforge.drivers.base import (
-    PLCDevice,
     DeviceInfo,
-    ProtectionStatus,
-    MemoryArea,
+    PLCDevice,
     PLCMode,
-    AccessLevel,
-    BlockType,
-    BlockInfo,
-    Block,
     PLCProgram,
+    ProtectionStatus,
     TagValue,
 )
 
@@ -41,9 +35,9 @@ class DiscoveredDevice:
     ip: str
     vendor: Vendor
     model: str
-    name: Optional[str] = None
-    mac_address: Optional[str] = None
-    additional_info: Dict[str, Any] = None
+    name: str | None = None
+    mac_address: str | None = None
+    additional_info: dict[str, Any] = None
 
 
 class DeviceFactory:
@@ -54,10 +48,10 @@ class DeviceFactory:
     """
 
     # Registry of vendor drivers
-    _drivers: Dict[Vendor, Type[PLCDevice]] = {}
+    _drivers: dict[Vendor, type[PLCDevice]] = {}
 
     @classmethod
-    def register_driver(cls, vendor: Vendor, driver_class: Type[PLCDevice]) -> None:
+    def register_driver(cls, vendor: Vendor, driver_class: type[PLCDevice]) -> None:
         """
         Register a driver class for a vendor.
 
@@ -71,8 +65,8 @@ class DeviceFactory:
     def create(
         cls,
         ip: str,
-        vendor: Optional[Union[Vendor, str]] = None,
-        model: Optional[str] = None,
+        vendor: Vendor | str | None = None,
+        model: str | None = None,
         **kwargs
     ) -> PLCDevice:
         """
@@ -267,8 +261,8 @@ class NetworkScanner:
     def scan_subnet(
         subnet: str,
         timeout: float = 1.0,
-        vendors: Optional[List[Vendor]] = None
-    ) -> List[DiscoveredDevice]:
+        vendors: list[Vendor] | None = None
+    ) -> list[DiscoveredDevice]:
         """
         Scan a subnet for PLC devices.
 
@@ -306,7 +300,7 @@ class NetworkScanner:
         start_ip: str,
         end_ip: str,
         timeout: float = 1.0
-    ) -> List[DiscoveredDevice]:
+    ) -> list[DiscoveredDevice]:
         """
         Scan a range of IP addresses for PLC devices.
 
@@ -348,7 +342,7 @@ class UnifiedPLC:
     def __init__(self, device: PLCDevice):
         self._device = device
         self._cache_enabled = False
-        self._tag_cache: Dict[str, TagValue] = {}
+        self._tag_cache: dict[str, TagValue] = {}
 
     @property
     def device(self) -> PLCDevice:
@@ -391,12 +385,12 @@ class UnifiedPLC:
         """Write a value to tag or address"""
         return self._device.write_tag(tag_or_address, value)
 
-    def read_multiple(self, tags: List[str]) -> Dict[str, Any]:
+    def read_multiple(self, tags: list[str]) -> dict[str, Any]:
         """Read multiple tags, return as dictionary"""
         results = self._device.read_tags(tags)
         return {tv.name: tv.value for tv in results}
 
-    def write_multiple(self, values: Dict[str, Any]) -> bool:
+    def write_multiple(self, values: dict[str, Any]) -> bool:
         """Write multiple tag values"""
         return self._device.write_tags(values)
 
@@ -422,7 +416,7 @@ class UnifiedPLC:
         program.save(path)
         return program
 
-    def restore(self, path_or_program: Union[str, PLCProgram]) -> bool:
+    def restore(self, path_or_program: str | PLCProgram) -> bool:
         """
         Restore a program to the PLC.
 
@@ -448,14 +442,14 @@ class UnifiedPLC:
         """
         return self._device.authenticate(password)
 
-    def get_all_tags(self) -> List[TagValue]:
+    def get_all_tags(self) -> list[TagValue]:
         """Get list of all available tags"""
         # Implementation depends on driver capability
         return []
 
     def monitor(
         self,
-        tags: List[str],
+        tags: list[str],
         callback,
         interval_ms: int = 100
     ):
@@ -478,7 +472,7 @@ class UnifiedPLC:
 
 
 # Convenience function for quick connections
-def connect(ip: str, vendor: Optional[str] = None, **kwargs) -> UnifiedPLC:
+def connect(ip: str, vendor: str | None = None, **kwargs) -> UnifiedPLC:
     """
     Quick connect to a PLC.
 

@@ -5,7 +5,6 @@ Main entry point for the application.
 """
 
 import sys
-import os
 from pathlib import Path
 
 
@@ -46,7 +45,7 @@ def cli_main():
     subparsers = parser.add_subparsers(dest='command', help='Commands')
 
     # GUI command (default)
-    gui_parser = subparsers.add_parser('gui', help='Launch GUI application')
+    subparsers.add_parser('gui', help='Launch GUI application')
 
     # Connect command
     connect_parser = subparsers.add_parser('connect', help='Connect to PLC')
@@ -137,7 +136,10 @@ def cli_main():
             sys.exit(1)
 
         from plcforge.recovery.engine import (
-            RecoveryEngine, RecoveryTarget, RecoveryConfig, RecoveryMethod
+            RecoveryConfig,
+            RecoveryEngine,
+            RecoveryMethod,
+            RecoveryTarget,
         )
 
         method_map = {

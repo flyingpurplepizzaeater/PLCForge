@@ -8,15 +8,14 @@ Scans networks for PLC devices and identifies potential security issues:
 - Insecure configurations
 """
 
-import socket
-import struct
-import threading
 import ipaddress
-from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Any, Callable
-from enum import Enum
+import socket
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass, field
 from datetime import datetime
+from enum import Enum
+from typing import Any
 
 
 class ScanStatus(Enum):
@@ -54,7 +53,7 @@ class SecurityIssue:
     description: str
     risk_level: RiskLevel
     recommendation: str
-    cve_ids: List[str] = field(default_factory=list)
+    cve_ids: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -66,10 +65,10 @@ class DeviceScanResult:
     vendor: str = ""
     model: str = ""
     firmware: str = ""
-    open_ports: List[PortScanResult] = field(default_factory=list)
-    security_issues: List[SecurityIssue] = field(default_factory=list)
+    open_ports: list[PortScanResult] = field(default_factory=list)
+    security_issues: list[SecurityIssue] = field(default_factory=list)
     scan_time: float = 0.0
-    raw_data: Dict[str, Any] = field(default_factory=dict)
+    raw_data: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -77,9 +76,9 @@ class NetworkScanResult:
     """Complete network scan result"""
     subnet: str
     start_time: datetime
-    end_time: Optional[datetime] = None
+    end_time: datetime | None = None
     status: ScanStatus = ScanStatus.PENDING
-    devices: List[DeviceScanResult] = field(default_factory=list)
+    devices: list[DeviceScanResult] = field(default_factory=list)
     total_hosts: int = 0
     scanned_hosts: int = 0
     plc_count: int = 0
@@ -176,7 +175,7 @@ class NetworkScanner:
         self._timeout = timeout
         self._max_workers = max_workers
         self._cancelled = False
-        self._progress_callback: Optional[Callable[[int, int], None]] = None
+        self._progress_callback: Callable[[int, int], None] | None = None
 
     def set_progress_callback(self, callback: Callable[[int, int], None]) -> None:
         """Set callback for progress updates: callback(scanned, total)"""
@@ -185,7 +184,7 @@ class NetworkScanner:
     def scan_subnet(
         self,
         subnet: str,
-        ports: Optional[List[int]] = None,
+        ports: list[int] | None = None,
         quick_scan: bool = False
     ) -> NetworkScanResult:
         """
@@ -252,7 +251,7 @@ class NetworkScanner:
         result.end_time = datetime.now()
         return result
 
-    def scan_host(self, ip: str, ports: Optional[List[int]] = None) -> DeviceScanResult:
+    def scan_host(self, ip: str, ports: list[int] | None = None) -> DeviceScanResult:
         """
         Scan a single host.
 
@@ -266,7 +265,7 @@ class NetworkScanner:
         scan_ports = ports or list(PLC_PORTS.keys())
         return self._scan_host(ip, scan_ports)
 
-    def _scan_host(self, ip: str, ports: List[int]) -> DeviceScanResult:
+    def _scan_host(self, ip: str, ports: list[int]) -> DeviceScanResult:
         """Internal host scanning implementation"""
         import time
         start_time = time.time()

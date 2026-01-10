@@ -6,21 +6,19 @@ for offline analysis and password recovery.
 """
 
 import os
-import zipfile
 import xml.etree.ElementTree as ET
-from typing import Any, Dict, List, Optional
+import zipfile
 from dataclasses import dataclass
 from pathlib import Path
-import hashlib
-import struct
+from typing import Any
 
 from plcforge.drivers.base import (
-    ProjectFileParser,
-    PLCProgram,
     Block,
     BlockInfo,
     BlockType,
     CodeLanguage,
+    PLCProgram,
+    ProjectFileParser,
 )
 
 
@@ -29,12 +27,12 @@ class TIAProjectInfo:
     """Information extracted from TIA Portal project"""
     version: str
     name: str
-    author: Optional[str]
-    created: Optional[str]
-    modified: Optional[str]
-    devices: List[Dict[str, Any]]
+    author: str | None
+    created: str | None
+    modified: str | None
+    devices: list[dict[str, Any]]
     protected: bool
-    password_hash: Optional[bytes]
+    password_hash: bytes | None
 
 
 class TIAPortalParser(ProjectFileParser):
@@ -65,7 +63,7 @@ class TIAPortalParser(ProjectFileParser):
         '.zap20': 'V20 (archived)',
     }
 
-    def supported_extensions(self) -> List[str]:
+    def supported_extensions(self) -> list[str]:
         return list(self.SUPPORTED_VERSIONS.keys())
 
     def parse(self, file_path: str) -> PLCProgram:
@@ -192,7 +190,7 @@ class TIAPortalParser(ProjectFileParser):
 
         return info
 
-    def _extract_blocks(self, zf: zipfile.ZipFile) -> List[Block]:
+    def _extract_blocks(self, zf: zipfile.ZipFile) -> list[Block]:
         """Extract program blocks from project"""
         blocks = []
 
@@ -210,7 +208,7 @@ class TIAPortalParser(ProjectFileParser):
 
         return blocks
 
-    def _parse_block_xml(self, content: bytes, filename: str) -> Optional[Block]:
+    def _parse_block_xml(self, content: bytes, filename: str) -> Block | None:
         """Parse a block XML file"""
         try:
             root = ET.fromstring(content)
@@ -276,7 +274,7 @@ class TIAPortalParser(ProjectFileParser):
         except ET.ParseError:
             return None
 
-    def _extract_configuration(self, zf: zipfile.ZipFile) -> Dict[str, Any]:
+    def _extract_configuration(self, zf: zipfile.ZipFile) -> dict[str, Any]:
         """Extract hardware configuration"""
         config = {}
 
@@ -285,7 +283,7 @@ class TIAPortalParser(ProjectFileParser):
                 if name.endswith('.xml'):
                     try:
                         content = zf.read(name)
-                        root = ET.fromstring(content)
+                        ET.fromstring(content)
                         # Extract relevant configuration
                         config['hardware_file'] = name
                     except Exception:
@@ -293,7 +291,7 @@ class TIAPortalParser(ProjectFileParser):
 
         return config
 
-    def get_protection_info(self, file_path: str) -> Dict[str, Any]:
+    def get_protection_info(self, file_path: str) -> dict[str, Any]:
         """
         Extract password and protection information from project file.
 
@@ -349,7 +347,7 @@ class TIAPortalParser(ProjectFileParser):
 
         return info
 
-    def _parse_protection_data(self, content: bytes) -> Dict[str, Any]:
+    def _parse_protection_data(self, content: bytes) -> dict[str, Any]:
         """Parse protection configuration data"""
         result = {}
 
@@ -374,7 +372,7 @@ class TIAPortalParser(ProjectFileParser):
 
         return result
 
-    def _parse_knowhow_protection(self, content: bytes) -> List[Dict[str, Any]]:
+    def _parse_knowhow_protection(self, content: bytes) -> list[dict[str, Any]]:
         """Parse know-how protection information"""
         protected_blocks = []
 
@@ -393,7 +391,7 @@ class TIAPortalParser(ProjectFileParser):
 
         return protected_blocks
 
-    def _extract_password_hash(self, content: bytes) -> Optional[Dict[str, Any]]:
+    def _extract_password_hash(self, content: bytes) -> dict[str, Any] | None:
         """
         Attempt to extract password hash from binary content.
 

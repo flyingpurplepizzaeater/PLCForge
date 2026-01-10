@@ -4,13 +4,11 @@ Theme Manager for PLCForge
 Supports light and dark themes with seamless switching.
 """
 
-from enum import Enum
-from typing import Dict, Any
 from dataclasses import dataclass
+from enum import Enum
 
-from PyQt6.QtWidgets import QApplication, QWidget
-from PyQt6.QtGui import QPalette, QColor
-from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QColor, QPalette
+from PyQt6.QtWidgets import QApplication
 
 
 class Theme(Enum):

@@ -6,9 +6,8 @@ Supports multiple output languages and vendors.
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Literal
 from enum import Enum
-import json
+from typing import Any, Literal
 
 from plcforge.drivers.base import CodeLanguage
 
@@ -36,8 +35,8 @@ class SafetyIssue:
     """A safety concern in generated code"""
     severity: Literal["critical", "warning", "info"]
     message: str
-    line_number: Optional[int] = None
-    suggestion: Optional[str] = None
+    line_number: int | None = None
+    suggestion: str | None = None
 
 
 @dataclass
@@ -47,8 +46,8 @@ class GeneratedCode:
     language: CodeLanguage
     vendor: Vendor
     explanation: str
-    safety_issues: List[SafetyIssue] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    safety_issues: list[SafetyIssue] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class AICodeGenerator:
@@ -62,8 +61,8 @@ class AICodeGenerator:
     def __init__(
         self,
         provider: Literal["openai", "anthropic"] = "openai",
-        api_key: Optional[str] = None,
-        model: Optional[str] = None
+        api_key: str | None = None,
+        model: str | None = None
     ):
         self.provider = provider
         self.api_key = api_key
@@ -103,7 +102,7 @@ class AICodeGenerator:
         self,
         prompt: str,
         target: CodeTarget,
-        context: Optional[str] = None,
+        context: str | None = None,
         safety_check: bool = True
     ) -> GeneratedCode:
         """
@@ -193,7 +192,7 @@ Output Format:
         self,
         prompt: str,
         target: CodeTarget,
-        context: Optional[str]
+        context: str | None
     ) -> str:
         """Build user prompt"""
         user_prompt = f"Generate {target.language.value} code for the following requirement:\n\n{prompt}"
@@ -203,7 +202,7 @@ Output Format:
 
         return user_prompt
 
-    def _get_vendor_info(self, vendor: Vendor) -> Dict[str, str]:
+    def _get_vendor_info(self, vendor: Vendor) -> dict[str, str]:
         """Get vendor-specific information"""
         vendor_info = {
             Vendor.SIEMENS: {
@@ -265,7 +264,7 @@ Generic IEC 61131-3 Guidelines:
         }
         return vendor_info.get(vendor, vendor_info[Vendor.GENERIC])
 
-    def _get_language_info(self, language: CodeLanguage) -> Dict[str, str]:
+    def _get_language_info(self, language: CodeLanguage) -> dict[str, str]:
         """Get language-specific information"""
         language_info = {
             CodeLanguage.STRUCTURED_TEXT: {
@@ -384,7 +383,7 @@ Instruction List Syntax:
 
         return ""
 
-    def _analyze_safety(self, code: str, target: CodeTarget) -> List[SafetyIssue]:
+    def _analyze_safety(self, code: str, target: CodeTarget) -> list[SafetyIssue]:
         """Analyze generated code for safety issues"""
         issues = []
 

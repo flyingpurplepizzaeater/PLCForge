@@ -5,29 +5,25 @@ Supports TwinCAT 2 and TwinCAT 3 PLCs.
 Uses pyads library for ADS communication.
 """
 
-from typing import Any, Dict, List, Optional, Tuple
-from dataclasses import dataclass
+from typing import Any
 
 try:
     import pyads
-    from pyads import Connection, AdsSymbol
+    from pyads import AdsSymbol, Connection
     PYADS_AVAILABLE = True
 except ImportError:
     PYADS_AVAILABLE = False
 
 from plcforge.drivers.base import (
-    PLCDevice,
-    DeviceInfo,
-    ProtectionStatus,
-    MemoryArea,
-    PLCMode,
-    AccessLevel,
-    BlockType,
     BlockInfo,
-    Block,
+    BlockType,
+    DeviceInfo,
+    MemoryArea,
+    PLCDevice,
+    PLCMode,
     PLCProgram,
+    ProtectionStatus,
     TagValue,
-    CodeLanguage,
 )
 
 
@@ -55,10 +51,10 @@ class BeckhoffADSDriver(PLCDevice):
             raise ImportError(
                 "pyads library not installed. Install with: pip install pyads"
             )
-        self._plc: Optional[Connection] = None
-        self._ams_net_id: Optional[str] = None
+        self._plc: Connection | None = None
+        self._ams_net_id: str | None = None
         self._ams_port: int = self.PORT_PLC_RUNTIME_1
-        self._ip: Optional[str] = None
+        self._ip: str | None = None
 
     @property
     def vendor(self) -> str:
@@ -67,7 +63,7 @@ class BeckhoffADSDriver(PLCDevice):
     def connect(
         self,
         ams_net_id: str,
-        ip: Optional[str] = None,
+        ip: str | None = None,
         port: int = PORT_PLC_RUNTIME_1
     ) -> bool:
         """
@@ -238,7 +234,7 @@ class BeckhoffADSDriver(PLCDevice):
 
         self._plc.write_by_name(name, value, plc_type)
 
-    def get_symbol_info(self, name: str) -> Dict[str, Any]:
+    def get_symbol_info(self, name: str) -> dict[str, Any]:
         """Get symbol information."""
         if not self._plc or not self._connected:
             raise ConnectionError("Not connected")
@@ -253,7 +249,7 @@ class BeckhoffADSDriver(PLCDevice):
             "comment": symbol.comment,
         }
 
-    def list_symbols(self) -> List[Dict[str, Any]]:
+    def list_symbols(self) -> list[dict[str, Any]]:
         """List all symbols in PLC."""
         if not self._plc or not self._connected:
             raise ConnectionError("Not connected")
@@ -271,7 +267,7 @@ class BeckhoffADSDriver(PLCDevice):
         """Authenticate (not typically required for ADS)."""
         return True
 
-    def list_blocks(self, block_type: Optional[BlockType] = None) -> List[BlockInfo]:
+    def list_blocks(self, block_type: BlockType | None = None) -> list[BlockInfo]:
         """List program blocks."""
         # Could list POUs from symbol table
         return []

@@ -12,15 +12,16 @@ over time with support for:
 
 import csv
 import json
-import time
 import sqlite3
 import threading
-from pathlib import Path
-from datetime import datetime, timedelta
-from dataclasses import dataclass, field, asdict
-from typing import Any, Dict, List, Optional, Callable, Union
+import time
 from collections import deque
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
+from pathlib import Path
+from typing import Any
 
 
 class ExportFormat(Enum):
@@ -43,7 +44,7 @@ class TrendDataPoint:
         """Get timestamp as datetime object"""
         return datetime.fromtimestamp(self.timestamp)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary"""
         return {
             "timestamp": self.timestamp,
@@ -61,8 +62,8 @@ class TrendConfig:
     max_points: int = 10000  # Maximum points to keep in memory
     auto_export: bool = False  # Automatically export when buffer full
     export_format: ExportFormat = ExportFormat.CSV
-    export_path: Optional[Path] = None
-    tags: List[str] = field(default_factory=list)  # Tags to monitor
+    export_path: Path | None = None
+    tags: list[str] = field(default_factory=list)  # Tags to monitor
 
 
 class TrendBuffer:
@@ -78,22 +79,22 @@ class TrendBuffer:
         with self._lock:
             self._buffer.append(point)
 
-    def get_all(self) -> List[TrendDataPoint]:
+    def get_all(self) -> list[TrendDataPoint]:
         """Get all points in buffer"""
         with self._lock:
             return list(self._buffer)
 
-    def get_by_tag(self, tag_name: str) -> List[TrendDataPoint]:
+    def get_by_tag(self, tag_name: str) -> list[TrendDataPoint]:
         """Get all points for a specific tag"""
         with self._lock:
             return [p for p in self._buffer if p.tag_name == tag_name]
 
     def get_range(
         self,
-        start_time: Optional[float] = None,
-        end_time: Optional[float] = None,
-        tag_name: Optional[str] = None
-    ) -> List[TrendDataPoint]:
+        start_time: float | None = None,
+        end_time: float | None = None,
+        tag_name: str | None = None
+    ) -> list[TrendDataPoint]:
         """Get points within time range"""
         with self._lock:
             points = list(self._buffer)
@@ -144,10 +145,10 @@ class TrendLogger:
         self._config = TrendConfig()
         self._buffer = TrendBuffer()
         self._running = False
-        self._thread: Optional[threading.Thread] = None
-        self._read_callback: Optional[Callable[[str], Any]] = None
-        self._data_callback: Optional[Callable[[TrendDataPoint], None]] = None
-        self._db_connection: Optional[sqlite3.Connection] = None
+        self._thread: threading.Thread | None = None
+        self._read_callback: Callable[[str], Any] | None = None
+        self._data_callback: Callable[[TrendDataPoint], None] | None = None
+        self._db_connection: sqlite3.Connection | None = None
 
     def configure(self, config: TrendConfig) -> None:
         """
@@ -187,7 +188,7 @@ class TrendLogger:
     def start(
         self,
         read_callback: Callable[[str], Any],
-        data_callback: Optional[Callable[[TrendDataPoint], None]] = None
+        data_callback: Callable[[TrendDataPoint], None] | None = None
     ) -> None:
         """
         Start trend logging.
@@ -325,10 +326,10 @@ class TrendLogger:
 
     def get_data(
         self,
-        tag_name: Optional[str] = None,
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None
-    ) -> List[TrendDataPoint]:
+        tag_name: str | None = None,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None
+    ) -> list[TrendDataPoint]:
         """
         Get trend data from buffer.
 
@@ -344,12 +345,12 @@ class TrendLogger:
         end_ts = end_time.timestamp() if end_time else None
         return self._buffer.get_range(start_ts, end_ts, tag_name)
 
-    def get_latest(self, tag_name: str) -> Optional[TrendDataPoint]:
+    def get_latest(self, tag_name: str) -> TrendDataPoint | None:
         """Get the most recent data point for a tag"""
         points = self._buffer.get_by_tag(tag_name)
         return points[-1] if points else None
 
-    def get_statistics(self, tag_name: str) -> Dict[str, Any]:
+    def get_statistics(self, tag_name: str) -> dict[str, Any]:
         """
         Get statistics for a tag.
 
@@ -376,7 +377,7 @@ class TrendLogger:
 
         return result
 
-    def export_csv(self, file_path: Union[str, Path]) -> None:
+    def export_csv(self, file_path: str | Path) -> None:
         """
         Export trend data to CSV file.
 
@@ -399,7 +400,7 @@ class TrendLogger:
                     point.quality
                 ])
 
-    def export_json(self, file_path: Union[str, Path]) -> None:
+    def export_json(self, file_path: str | Path) -> None:
         """
         Export trend data to JSON file.
 
@@ -413,7 +414,7 @@ class TrendLogger:
         data = {
             "exported_at": datetime.now().isoformat(),
             "point_count": len(points),
-            "tags": list(set(p.tag_name for p in points)),
+            "tags": list({p.tag_name for p in points}),
             "data": [point.to_dict() for point in points]
         }
 
@@ -425,7 +426,7 @@ class TrendLogger:
         tag_name: str,
         start_time: datetime,
         end_time: datetime
-    ) -> List[TrendDataPoint]:
+    ) -> list[TrendDataPoint]:
         """
         Query historical data from SQLite database.
 
@@ -490,6 +491,6 @@ class TrendLogger:
         return self._buffer.size
 
     @property
-    def monitored_tags(self) -> List[str]:
+    def monitored_tags(self) -> list[str]:
         """List of tags being monitored"""
         return list(self._config.tags)

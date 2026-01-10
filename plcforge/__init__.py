@@ -18,7 +18,7 @@ Features:
 __version__ = "1.0.0"
 __author__ = "PLCForge Team"
 
-from plcforge.pal.unified_api import connect, DeviceFactory, UnifiedPLC
+from plcforge.pal.unified_api import DeviceFactory, UnifiedPLC, connect
 
 __all__ = [
     'connect',

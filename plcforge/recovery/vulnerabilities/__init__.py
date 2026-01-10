@@ -4,8 +4,8 @@ Vulnerability Exploits for Password Recovery
 Contains vendor-specific exploits for password bypass/recovery.
 """
 
-from typing import Any, Dict, List, Optional, Type
 from abc import ABC, abstractmethod
+from typing import Any
 
 
 class VulnerabilityExploit(ABC):
@@ -13,10 +13,10 @@ class VulnerabilityExploit(ABC):
 
     name: str = "Unknown Exploit"
     description: str = ""
-    affected_vendors: List[str] = []
-    affected_models: List[str] = []
-    affected_firmware: List[str] = []
-    cve: Optional[str] = None
+    affected_vendors: list[str] = []
+    affected_models: list[str] = []
+    affected_firmware: list[str] = []
+    cve: str | None = None
 
     @abstractmethod
     def check_applicable(self, target) -> bool:
@@ -24,7 +24,7 @@ class VulnerabilityExploit(ABC):
         pass
 
     @abstractmethod
-    def execute(self, target) -> Dict[str, Any]:
+    def execute(self, target) -> dict[str, Any]:
         """
         Execute the exploit.
 
@@ -49,7 +49,7 @@ def _get_exploit_classes():
     ]
 
 
-def get_exploits(vendor: str, model: str) -> List[VulnerabilityExploit]:
+def get_exploits(vendor: str, model: str) -> list[VulnerabilityExploit]:
     """Get applicable exploits for a vendor/model combination"""
     applicable = []
 
@@ -75,7 +75,7 @@ def get_exploits(vendor: str, model: str) -> List[VulnerabilityExploit]:
     return applicable
 
 
-def register_exploit(exploit_class: Type[VulnerabilityExploit]):
+def register_exploit(exploit_class: type[VulnerabilityExploit]):
     """Register a new exploit class - for plugin extensibility"""
     # Would need mutable registry for runtime extension
     pass

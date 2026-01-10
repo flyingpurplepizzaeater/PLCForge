@@ -5,15 +5,14 @@ Provides tamper-evident logging for all security-sensitive operations.
 Logs are stored locally and can be exported for compliance reporting.
 """
 
-import json
 import hashlib
-import os
-from dataclasses import dataclass, field, asdict
-from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+import json
 import threading
 import uuid
+from dataclasses import asdict, dataclass, field
+from datetime import datetime
+from pathlib import Path
+from typing import Any
 
 
 @dataclass
@@ -24,12 +23,12 @@ class AuditEntry:
     user: str
     machine_id: str
     action: str
-    target: Dict[str, Any]
+    target: dict[str, Any]
     result: str  # "success", "failure", "cancelled"
-    details: Dict[str, Any] = field(default_factory=dict)
-    duration_ms: Optional[int] = None
-    previous_hash: Optional[str] = None
-    entry_hash: Optional[str] = None
+    details: dict[str, Any] = field(default_factory=dict)
+    duration_ms: int | None = None
+    previous_hash: str | None = None
+    entry_hash: str | None = None
 
     def compute_hash(self) -> str:
         """Compute hash of entry for integrity verification"""
@@ -60,12 +59,12 @@ class AuditLogger:
     - Thread-safe operation
     """
 
-    def __init__(self, log_dir: Optional[str] = None):
+    def __init__(self, log_dir: str | None = None):
         self.log_dir = Path(log_dir) if log_dir else Path.home() / '.plcforge' / 'audit'
         self.log_dir.mkdir(parents=True, exist_ok=True)
 
-        self._current_log_file: Optional[Path] = None
-        self._last_hash: Optional[str] = None
+        self._current_log_file: Path | None = None
+        self._last_hash: str | None = None
         self._lock = threading.Lock()
         self._machine_id = self._get_machine_id()
         self._user = self._get_current_user()
@@ -91,7 +90,7 @@ class AuditLogger:
 
             elif system == "Linux":
                 try:
-                    with open('/etc/machine-id', 'r') as f:
+                    with open('/etc/machine-id') as f:
                         return f.read().strip()
                 except FileNotFoundError:
                     pass
@@ -134,7 +133,7 @@ class AuditLogger:
         # Load last hash if continuing existing file
         if self._current_log_file.exists():
             try:
-                with open(self._current_log_file, 'r') as f:
+                with open(self._current_log_file) as f:
                     for line in f:
                         if line.strip():
                             entry = json.loads(line)
@@ -145,10 +144,10 @@ class AuditLogger:
     def log(
         self,
         action: str,
-        target: Dict[str, Any],
+        target: dict[str, Any],
         result: str = "success",
-        details: Optional[Dict[str, Any]] = None,
-        duration_ms: Optional[int] = None
+        details: dict[str, Any] | None = None,
+        duration_ms: int | None = None
     ) -> AuditEntry:
         """
         Log a security-sensitive action.
@@ -209,7 +208,7 @@ class AuditLogger:
         method: str,
         success: bool,
         duration_ms: int,
-        password_hash: Optional[str] = None
+        password_hash: str | None = None
     ) -> AuditEntry:
         """Log a password recovery attempt"""
         return self.log(
@@ -277,11 +276,11 @@ class AuditLogger:
 
     def get_entries(
         self,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
-        action_filter: Optional[str] = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+        action_filter: str | None = None,
         limit: int = 1000
-    ) -> List[AuditEntry]:
+    ) -> list[AuditEntry]:
         """
         Retrieve audit entries.
 
@@ -313,7 +312,7 @@ class AuditLogger:
 
             # Read entries
             try:
-                with open(log_file, 'r') as f:
+                with open(log_file) as f:
                     for line in f:
                         if line.strip():
                             data = json.loads(line)
@@ -341,7 +340,7 @@ class AuditLogger:
 
         return entries
 
-    def verify_integrity(self) -> Dict[str, Any]:
+    def verify_integrity(self) -> dict[str, Any]:
         """
         Verify integrity of audit log chain.
 
@@ -359,7 +358,7 @@ class AuditLogger:
 
         for log_file in sorted(self.log_dir.glob('audit_*.jsonl')):
             try:
-                with open(log_file, 'r') as f:
+                with open(log_file) as f:
                     for line_num, line in enumerate(f, 1):
                         if not line.strip():
                             continue
@@ -403,8 +402,8 @@ class AuditLogger:
     def export_report(
         self,
         output_path: str,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
         format: str = "json"
     ) -> str:
         """
@@ -463,7 +462,7 @@ class AuditLogger:
 
 
 # Global logger instance
-_logger: Optional[AuditLogger] = None
+_logger: AuditLogger | None = None
 
 
 def get_logger() -> AuditLogger:

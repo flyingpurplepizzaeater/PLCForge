@@ -8,7 +8,7 @@ Supports:
 - S7-1500 (S7comm+ protocol)
 """
 
-from plcforge.drivers.siemens.s7comm import SiemensS7Driver
 from plcforge.drivers.siemens.project_parser import TIAPortalParser
+from plcforge.drivers.siemens.s7comm import SiemensS7Driver
 
 __all__ = ['SiemensS7Driver', 'TIAPortalParser']
