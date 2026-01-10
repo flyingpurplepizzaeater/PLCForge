@@ -132,6 +132,12 @@ plcforge/
 - `setup_environment()` creates `~/.plcforge` directories (audit, cache, projects)
 - Called before launching GUI or CLI
 - Ensures sys.path includes application directory
+
+**Version Control:**
+- `.gitignore` excludes Python artifacts (`__pycache__/`, `*.pyc`, `*.egg-info/`)
+- Virtual environments ignored (`venv/`, `.venv/`, `ENV/`)
+- IDE files excluded (`.idea/`, `.vscode/`)
+- User data directory `~/.plcforge/` and log files ignored
 <!-- END AUTO-MANAGED -->
 
 <!-- AUTO-MANAGED: dependencies -->
