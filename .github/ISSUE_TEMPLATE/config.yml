@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Discussions
+    url: https://github.com/flyingpurplepizzaeater/PLCForge/discussions
+    about: Ask questions and discuss PLCForge features
+  - name: Security Vulnerability
+    url: https://github.com/flyingpurplepizzaeater/PLCForge/security/advisories/new
+    about: Report security vulnerabilities privately

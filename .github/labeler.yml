@@ -1,0 +1,94 @@
+# Label configuration for auto-labeling PRs
+# Maps file patterns to labels
+
+# Driver labels
+drivers:
+  - changed-files:
+      - any-glob-to-any-file: 'plcforge/drivers/**/*'
+
+siemens:
+  - changed-files:
+      - any-glob-to-any-file: 'plcforge/drivers/siemens/**/*'
+
+allen-bradley:
+  - changed-files:
+      - any-glob-to-any-file: 'plcforge/drivers/allen_bradley/**/*'
+
+delta:
+  - changed-files:
+      - any-glob-to-any-file: 'plcforge/drivers/delta/**/*'
+
+omron:
+  - changed-files:
+      - any-glob-to-any-file: 'plcforge/drivers/omron/**/*'
+
+beckhoff:
+  - changed-files:
+      - any-glob-to-any-file: 'plcforge/drivers/beckhoff/**/*'
+
+mitsubishi:
+  - changed-files:
+      - any-glob-to-any-file: 'plcforge/drivers/mitsubishi/**/*'
+
+schneider:
+  - changed-files:
+      - any-glob-to-any-file: 'plcforge/drivers/schneider/**/*'
+
+# Component labels
+gui:
+  - changed-files:
+      - any-glob-to-any-file: 'plcforge/gui/**/*'
+
+ai:
+  - changed-files:
+      - any-glob-to-any-file: 'plcforge/ai/**/*'
+
+recovery:
+  - changed-files:
+      - any-glob-to-any-file: 'plcforge/recovery/**/*'
+
+security:
+  - changed-files:
+      - any-glob-to-any-file: 'plcforge/security/**/*'
+
+pal:
+  - changed-files:
+      - any-glob-to-any-file: 'plcforge/pal/**/*'
+
+utils:
+  - changed-files:
+      - any-glob-to-any-file: 'plcforge/utils/**/*'
+
+# Type labels
+tests:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'plcforge/tests/**/*'
+          - 'tests/**/*'
+          - '**/test_*.py'
+          - '**/*_test.py'
+
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/*.md'
+          - 'docs/**/*'
+
+ci-cd:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '.github/**/*'
+          - 'pyproject.toml'
+          - 'setup.py'
+          - 'setup.cfg'
+
+themes:
+  - changed-files:
+      - any-glob-to-any-file: 'plcforge/gui/themes/**/*'
+
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'requirements*.txt'
+          - 'pyproject.toml'
+          - 'setup.py'

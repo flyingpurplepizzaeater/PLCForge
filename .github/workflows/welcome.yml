@@ -1,0 +1,42 @@
+# Welcome first-time contributors
+# Automatically greets new contributors on their first issue or PR
+
+name: Welcome New Contributors
+
+on:
+  issues:
+    types: [opened]
+  pull_request_target:
+    types: [opened]
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  welcome:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Welcome first-time contributors
+        uses: actions/first-interaction@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          issue-message: |
+            Welcome to PLCForge! Thanks for opening your first issue.
+
+            A maintainer will review your issue soon. In the meantime:
+            - Make sure you've provided all the requested information in the template
+            - Check the [documentation](https://github.com/flyingpurplepizzaeater/PLCForge#readme) for common solutions
+            - Join our [discussions](https://github.com/flyingpurplepizzaeater/PLCForge/discussions) for questions
+
+            We appreciate your contribution to making PLCForge better!
+          pr-message: |
+            Welcome to PLCForge! Thanks for your first pull request.
+
+            A maintainer will review your PR soon. Before that happens:
+            - Make sure all CI checks pass
+            - Ensure your code follows our coding conventions
+            - Add tests for new functionality
+            - Update documentation if needed
+
+            Thanks for contributing to PLCForge!

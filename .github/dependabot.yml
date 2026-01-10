@@ -1,0 +1,62 @@
+# Dependabot configuration for automatic dependency updates
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates
+
+version: 2
+updates:
+  # Python dependencies (pip)
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "deps(pip)"
+    groups:
+      # Group PLC communication libraries
+      plc-drivers:
+        patterns:
+          - "python-snap7*"
+          - "pycomm3*"
+          - "pymodbus*"
+          - "pyfins*"
+          - "pyads*"
+      # Group AI/ML libraries
+      ai-ml:
+        patterns:
+          - "openai*"
+          - "anthropic*"
+          - "chromadb*"
+          - "langchain*"
+      # Group GUI libraries
+      gui:
+        patterns:
+          - "PyQt6*"
+          - "pyqtgraph*"
+      # Group testing libraries
+      testing:
+        patterns:
+          - "pytest*"
+          - "coverage*"
+          - "mypy*"
+          - "ruff*"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "ci-cd"
+    commit-message:
+      prefix: "deps(actions)"
