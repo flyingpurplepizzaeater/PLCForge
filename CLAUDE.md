@@ -112,8 +112,9 @@ plcforge/
 **Error Handling:**
 - Drivers store errors in `_last_error` property
 - Connection failures raise descriptive `ConnectionError` with vendor context
-- Import checks use try/except with vendor-specific flags (`SNAP7_AVAILABLE`, `PYCOMM3_AVAILABLE`)
+- Import checks use try/except with vendor-specific flags (`SNAP7_AVAILABLE`, `PYCOMM3_AVAILABLE`, `PYMODBUS_AVAILABLE`)
 - Missing libraries raise `ImportError` with installation instructions in driver `__init__`
+- Conditional module-level constants: `MEMORY_AREA_MAP` only populated when dependency available (empty dict fallback)
 
 **Factory Pattern:**
 - `DeviceFactory.create()` with vendor auto-detection or explicit specification
@@ -147,6 +148,7 @@ plcforge/
 - `MockPLCDevice` class for testing PAL without real hardware
 - Sample TIA Portal XML and temp project files via `tmp_path` fixture
 - Test authorization with `patch.object(engine, "_confirm_authorization", return_value=True)`
+- Conditional test skipping: Check availability flags (`SNAP7_AVAILABLE`, `PYCOMM3_AVAILABLE`, `PYMODBUS_AVAILABLE`) before instantiating drivers, use `pytest.skip()` when dependencies missing
 
 **Version Control:**
 - `.gitignore` excludes Python artifacts (`__pycache__/`, `*.pyc`, `*.egg-info/`)

@@ -24,6 +24,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt6.QtGui import QAction, QIcon, QFont, QColor
 
+from plcforge.gui.themes import ThemeManager, Theme, StructuredTextHighlighter
 from plcforge.pal.unified_api import DeviceFactory, UnifiedPLC, Vendor
 from plcforge.drivers.base import PLCMode, DeviceInfo
 from plcforge.recovery.engine import (
@@ -44,6 +45,8 @@ class PLCForgeMainWindow(QMainWindow):
         self._connected_devices: Dict[str, UnifiedPLC] = {}
         self._current_project: Optional[Path] = None
         self._audit_logger = get_logger()
+        self._theme_manager = ThemeManager(QApplication.instance())
+        self._highlighters = {}
 
         self._setup_ui()
         self._setup_menus()
@@ -97,6 +100,9 @@ class PLCForgeMainWindow(QMainWindow):
             <li>Allen-Bradley CompactLogix/ControlLogix</li>
             <li>Delta DVP Series</li>
             <li>Omron CP/CJ/NX/NJ Series</li>
+            <li>Mitsubishi MELSEC-Q/L/iQ-R/iQ-F Series</li>
+            <li>Beckhoff TwinCAT 2/3</li>
+            <li>Schneider Modicon M340/M580/Premium/Quantum</li>
         </ul>
         """)
         self.editor_tabs.addTab(welcome, "Welcome")
@@ -213,6 +219,36 @@ class PLCForgeMainWindow(QMainWindow):
 
         # View menu
         view_menu = menubar.addMenu("&View")
+
+        # Theme toggle
+        self.dark_mode_action = QAction("&Dark Mode", self)
+        self.dark_mode_action.setCheckable(True)
+        self.dark_mode_action.setShortcut("Ctrl+Shift+D")
+        self.dark_mode_action.triggered.connect(self._toggle_theme)
+        view_menu.addAction(self.dark_mode_action)
+
+        view_menu.addSeparator()
+
+        # Syntax highlighting submenu
+        syntax_menu = view_menu.addMenu("Syntax &Highlighting")
+
+        st_action = QAction("Structured Text", self)
+        st_action.triggered.connect(lambda: self._set_syntax("structured_text"))
+        syntax_menu.addAction(st_action)
+
+        ladder_action = QAction("Ladder", self)
+        ladder_action.triggered.connect(lambda: self._set_syntax("ladder"))
+        syntax_menu.addAction(ladder_action)
+
+        il_action = QAction("Instruction List", self)
+        il_action.triggered.connect(lambda: self._set_syntax("instruction_list"))
+        syntax_menu.addAction(il_action)
+
+        fbd_action = QAction("Function Block", self)
+        fbd_action.triggered.connect(lambda: self._set_syntax("function_block"))
+        syntax_menu.addAction(fbd_action)
+
+        view_menu.addSeparator()
 
         # PLC menu
         plc_menu = menubar.addMenu("&PLC")
@@ -340,7 +376,7 @@ class PLCForgeMainWindow(QMainWindow):
         self.project_tree.clear()
 
         # Root items for each vendor
-        vendors = ["Siemens", "Allen-Bradley", "Delta", "Omron"]
+        vendors = ["Siemens", "Allen-Bradley", "Delta", "Omron", "Mitsubishi", "Beckhoff", "Schneider"]
 
         for vendor in vendors:
             vendor_item = QTreeWidgetItem([vendor])
@@ -395,6 +431,9 @@ class PLCForgeMainWindow(QMainWindow):
                     'allen-bradley': 'allen_bradley',
                     'delta': 'delta',
                     'omron': 'omron',
+                    'mitsubishi': 'mitsubishi',
+                    'beckhoff': 'beckhoff',
+                    'schneider': 'schneider',
                 }
 
                 device = DeviceFactory.create(
@@ -480,12 +519,8 @@ class PLCForgeMainWindow(QMainWindow):
 
     def _show_network_scanner(self):
         """Show network scanner dialog"""
-        # TODO: Implement network scanner
-        QMessageBox.information(
-            self,
-            "Network Scanner",
-            "Network scanner not yet implemented"
-        )
+        dialog = NetworkScannerDialog(self)
+        dialog.exec()
 
     def _generate_ai_code(self):
         """Generate code using AI"""
@@ -560,6 +595,30 @@ Motor1 := ConveyorRunning;
         if index > 0:  # Don't close welcome tab
             self.editor_tabs.removeTab(index)
 
+    def _toggle_theme(self):
+        """Toggle between light and dark themes"""
+        new_theme = self._theme_manager.toggle_theme()
+        self.dark_mode_action.setChecked(new_theme == Theme.DARK)
+        # Update highlighters with new theme
+        for highlighter in self._highlighters.values():
+            if highlighter:
+                highlighter.update_theme()
+
+    def _set_syntax(self, language: str):
+        """Set syntax highlighting for current editor"""
+        from plcforge.gui.themes.syntax_highlighter import apply_highlighter
+        current_widget = self.editor_tabs.currentWidget()
+        if isinstance(current_widget, QTextEdit):
+            # Remove old highlighter if exists
+            tab_id = id(current_widget)
+            if tab_id in self._highlighters:
+                old = self._highlighters[tab_id]
+                if old:
+                    old.setDocument(None)
+            # Apply new highlighter
+            self._highlighters[tab_id] = apply_highlighter(current_widget, language)
+            self.statusbar.showMessage(f"Syntax highlighting: {language.replace('_', ' ').title()}")
+
 
 class ConnectDialog(QDialog):
     """PLC Connection dialog"""
@@ -576,7 +635,7 @@ class ConnectDialog(QDialog):
         vendor_layout.addWidget(QLabel("Vendor:"))
         self.vendor_combo = QComboBox()
         self.vendor_combo.addItems([
-            "Siemens", "Allen-Bradley", "Delta", "Omron"
+            "Siemens", "Allen-Bradley", "Delta", "Omron", "Mitsubishi", "Beckhoff", "Schneider"
         ])
         vendor_layout.addWidget(self.vendor_combo)
         layout.addLayout(vendor_layout)
@@ -859,6 +918,245 @@ class PasswordRecoveryWizard(QDialog):
         )
 
 
+class NetworkScannerDialog(QDialog):
+    """Network security scanner dialog"""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("PLC Network Security Scanner")
+        self.setMinimumSize(800, 600)
+
+        from plcforge.security.network_scanner import (
+            NetworkScanner, generate_security_report, RiskLevel
+        )
+        self._scanner = NetworkScanner()
+        self._scan_result = None
+
+        layout = QVBoxLayout(self)
+
+        # Scan configuration
+        config_group = QGroupBox("Scan Configuration")
+        config_layout = QFormLayout()
+
+        self.subnet_input = QLineEdit()
+        self.subnet_input.setPlaceholderText("192.168.1.0/24")
+        self.subnet_input.setText("192.168.1.0/24")
+        config_layout.addRow("Subnet (CIDR):", self.subnet_input)
+
+        self.quick_scan_check = QCheckBox("Quick scan (common ports only)")
+        self.quick_scan_check.setChecked(True)
+        config_layout.addRow("", self.quick_scan_check)
+
+        config_group.setLayout(config_layout)
+        layout.addWidget(config_group)
+
+        # Progress section
+        progress_layout = QHBoxLayout()
+
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setVisible(False)
+        progress_layout.addWidget(self.progress_bar)
+
+        self.status_label = QLabel("Ready to scan")
+        progress_layout.addWidget(self.status_label)
+
+        layout.addLayout(progress_layout)
+
+        # Results table
+        self.results_table = QTableWidget()
+        self.results_table.setColumnCount(6)
+        self.results_table.setHorizontalHeaderLabels([
+            "IP Address", "Hostname", "Vendor", "Model", "Open Ports", "Issues"
+        ])
+        self.results_table.horizontalHeader().setSectionResizeMode(
+            QHeaderView.ResizeMode.Stretch
+        )
+        layout.addWidget(self.results_table)
+
+        # Issue details
+        details_group = QGroupBox("Security Issues")
+        details_layout = QVBoxLayout()
+
+        self.issues_text = QTextEdit()
+        self.issues_text.setReadOnly(True)
+        self.issues_text.setMaximumHeight(150)
+        details_layout.addWidget(self.issues_text)
+
+        details_group.setLayout(details_layout)
+        layout.addWidget(details_group)
+
+        # Buttons
+        button_layout = QHBoxLayout()
+
+        self.scan_btn = QPushButton("Start Scan")
+        self.scan_btn.clicked.connect(self._start_scan)
+        button_layout.addWidget(self.scan_btn)
+
+        self.stop_btn = QPushButton("Stop")
+        self.stop_btn.clicked.connect(self._stop_scan)
+        self.stop_btn.setEnabled(False)
+        button_layout.addWidget(self.stop_btn)
+
+        export_btn = QPushButton("Export Report")
+        export_btn.clicked.connect(self._export_report)
+        button_layout.addWidget(export_btn)
+
+        close_btn = QPushButton("Close")
+        close_btn.clicked.connect(self.close)
+        button_layout.addWidget(close_btn)
+
+        layout.addLayout(button_layout)
+
+        # Connect table selection
+        self.results_table.itemSelectionChanged.connect(self._show_device_issues)
+
+    def _start_scan(self):
+        """Start network scan"""
+        subnet = self.subnet_input.text().strip()
+        if not subnet:
+            QMessageBox.warning(self, "Input Required", "Please enter a subnet to scan.")
+            return
+
+        self.scan_btn.setEnabled(False)
+        self.stop_btn.setEnabled(True)
+        self.progress_bar.setVisible(True)
+        self.progress_bar.setRange(0, 0)  # Indeterminate
+        self.status_label.setText("Scanning...")
+        self.results_table.setRowCount(0)
+        self.issues_text.clear()
+
+        # Run scan in thread
+        import threading
+        def run_scan():
+            from plcforge.security.network_scanner import NetworkScanner
+            scanner = NetworkScanner()
+            scanner.set_progress_callback(self._update_scan_progress)
+            self._scan_result = scanner.scan_subnet(
+                subnet,
+                quick_scan=self.quick_scan_check.isChecked()
+            )
+            # Update UI from main thread
+            QTimer.singleShot(0, self._scan_completed)
+
+        thread = threading.Thread(target=run_scan, daemon=True)
+        thread.start()
+
+    def _update_scan_progress(self, scanned: int, total: int):
+        """Update progress during scan"""
+        QTimer.singleShot(0, lambda: self._set_progress(scanned, total))
+
+    def _set_progress(self, scanned: int, total: int):
+        """Set progress bar values (called from main thread)"""
+        self.progress_bar.setRange(0, total)
+        self.progress_bar.setValue(scanned)
+        self.status_label.setText(f"Scanned {scanned}/{total} hosts")
+
+    def _scan_completed(self):
+        """Handle scan completion"""
+        self.scan_btn.setEnabled(True)
+        self.stop_btn.setEnabled(False)
+        self.progress_bar.setVisible(False)
+
+        if not self._scan_result:
+            self.status_label.setText("Scan failed")
+            return
+
+        result = self._scan_result
+        self.status_label.setText(
+            f"Scan complete: {result.plc_count} PLCs found, {result.issue_count} issues"
+        )
+
+        # Populate results table
+        self.results_table.setRowCount(len(result.devices))
+        for row, device in enumerate(result.devices):
+            self.results_table.setItem(row, 0, QTableWidgetItem(device.ip_address))
+            self.results_table.setItem(row, 1, QTableWidgetItem(device.hostname))
+            self.results_table.setItem(row, 2, QTableWidgetItem(device.vendor))
+            self.results_table.setItem(row, 3, QTableWidgetItem(device.model))
+            ports = ", ".join(str(p.port) for p in device.open_ports)
+            self.results_table.setItem(row, 4, QTableWidgetItem(ports))
+            self.results_table.setItem(row, 5, QTableWidgetItem(str(len(device.security_issues))))
+
+            # Color code based on issues
+            if device.security_issues:
+                from plcforge.security.network_scanner import RiskLevel
+                max_risk = max(i.risk_level.value for i in device.security_issues)
+                if max_risk == "critical":
+                    color = QColor(255, 100, 100)
+                elif max_risk == "high":
+                    color = QColor(255, 180, 100)
+                elif max_risk == "medium":
+                    color = QColor(255, 255, 150)
+                else:
+                    color = QColor(200, 255, 200)
+
+                for col in range(6):
+                    item = self.results_table.item(row, col)
+                    if item:
+                        item.setBackground(color)
+
+    def _stop_scan(self):
+        """Stop ongoing scan"""
+        self._scanner.cancel()
+        self.status_label.setText("Scan cancelled")
+        self.scan_btn.setEnabled(True)
+        self.stop_btn.setEnabled(False)
+        self.progress_bar.setVisible(False)
+
+    def _show_device_issues(self):
+        """Show issues for selected device"""
+        if not self._scan_result:
+            return
+
+        selected = self.results_table.selectedItems()
+        if not selected:
+            return
+
+        row = selected[0].row()
+        if row < len(self._scan_result.devices):
+            device = self._scan_result.devices[row]
+
+            if device.security_issues:
+                lines = [f"<h3>Security Issues for {device.ip_address}</h3>"]
+                for issue in device.security_issues:
+                    risk_color = {
+                        "critical": "#ff0000",
+                        "high": "#ff8800",
+                        "medium": "#ffcc00",
+                        "low": "#00aa00",
+                        "info": "#0088ff"
+                    }.get(issue.risk_level.value, "#888888")
+
+                    lines.append(f"<p><b style='color:{risk_color}'>[{issue.risk_level.value.upper()}]</b> "
+                               f"<b>{issue.title}</b><br/>"
+                               f"{issue.description}<br/>"
+                               f"<i>Recommendation: {issue.recommendation}</i></p>")
+
+                self.issues_text.setHtml("".join(lines))
+            else:
+                self.issues_text.setHtml(f"<p>No security issues found for {device.ip_address}</p>")
+
+    def _export_report(self):
+        """Export scan report"""
+        if not self._scan_result:
+            QMessageBox.warning(self, "No Data", "Please run a scan first.")
+            return
+
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Save Security Report",
+            "plc_security_report.md",
+            "Markdown (*.md);;All Files (*)"
+        )
+
+        if file_path:
+            from plcforge.security.network_scanner import generate_security_report
+            report = generate_security_report(self._scan_result)
+            with open(file_path, 'w') as f:
+                f.write(report)
+            QMessageBox.information(self, "Export Complete", f"Report saved to:\n{file_path}")
+
+
 def main():
     """Application entry point"""
     app = QApplication(sys.argv)
@@ -868,7 +1166,12 @@ def main():
     # Set application style
     app.setStyle("Fusion")
 
+    # Initialize theme manager (dark mode by default)
+    theme_manager = ThemeManager(app)
+    theme_manager.set_theme(Theme.DARK)
+
     window = PLCForgeMainWindow()
+    window.dark_mode_action.setChecked(True)
     window.show()
 
     sys.exit(app.exec())
