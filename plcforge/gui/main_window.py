@@ -477,7 +477,7 @@ class PLCForgeMainWindow(QMainWindow):
             project_file = project_dir / "project.json"
             if project_file.exists():
                 import json
-                with open(project_file, "r") as f:
+                with open(project_file) as f:
                     project_info = json.load(f)
                 self._current_project = project_dir
                 self.statusbar.showMessage(f"Loaded: {project_info.get('name', project_dir.name)}")
@@ -528,7 +528,7 @@ class PLCForgeMainWindow(QMainWindow):
             project_file = self._current_project / "project.json"
             if project_file.exists():
                 import json
-                with open(project_file, "r") as f:
+                with open(project_file) as f:
                     project_info = json.load(f)
                 project_info["modified"] = str(datetime.now())
                 with open(project_file, "w") as f:
@@ -738,8 +738,9 @@ class PLCForgeMainWindow(QMainWindow):
         try:
             # Try to use AI code generator if API keys are available
             import os
+
             from plcforge.ai.code_generator import AICodeGenerator, CodeTarget
-            from plcforge.drivers.base import Vendor, CodeLanguage
+            from plcforge.drivers.base import CodeLanguage, Vendor
 
             # Check for API keys
             openai_key = os.getenv('OPENAI_API_KEY')
@@ -886,6 +887,7 @@ END_VAR
 
         try:
             import os
+
             from plcforge.ai.code_generator import AICodeGenerator
 
             # Check for API keys
