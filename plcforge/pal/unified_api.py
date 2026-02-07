@@ -456,9 +456,62 @@ class UnifiedPLC:
         """
         Start monitoring tags with callback on changes.
 
-        This is a placeholder for the monitoring feature.
+        Args:
+            tags: List of tag names to monitor
+            callback: Function to call when values change. 
+                     Signature: callback(tag_name: str, value: TagValue)
+            interval_ms: Polling interval in milliseconds (default 100ms)
+
+        Returns:
+            Callable to stop monitoring
+
+        Example:
+            >>> def on_change(tag, value):
+            ...     print(f"{tag} = {value.value}")
+            >>> stop = plc.monitor(["Motor1.Speed"], on_change)
+            >>> # ... later ...
+            >>> stop()
         """
-        raise NotImplementedError("Tag monitoring not yet implemented")
+        import threading
+        import time
+
+        self._monitoring_active = True
+        self._monitoring_thread = None
+        last_values = {}
+
+        def monitor_loop():
+            """Background thread for tag monitoring"""
+            while self._monitoring_active:
+                try:
+                    # Read all tags
+                    for tag in tags:
+                        try:
+                            current = self.read(tag)
+                            # Check if value changed
+                            if tag not in last_values or last_values[tag].value != current.value:
+                                last_values[tag] = current
+                                callback(tag, current)
+                        except Exception as e:
+                            # Continue monitoring other tags on error
+                            pass
+                    
+                    # Sleep for interval
+                    time.sleep(interval_ms / 1000.0)
+                except Exception:
+                    # Continue monitoring even if errors occur
+                    pass
+
+        # Start monitoring thread
+        self._monitoring_thread = threading.Thread(target=monitor_loop, daemon=True)
+        self._monitoring_thread.start()
+
+        # Return stop function
+        def stop_monitoring():
+            self._monitoring_active = False
+            if self._monitoring_thread:
+                self._monitoring_thread.join(timeout=1.0)
+
+        return stop_monitoring
 
     def disconnect(self) -> None:
         """Disconnect from PLC"""

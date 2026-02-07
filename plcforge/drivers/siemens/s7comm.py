@@ -514,9 +514,40 @@ class SiemensS7Driver(PLCDevice):
 
     def _download_block(self, block: Block) -> bool:
         """Download a single block to PLC"""
-        # Implementation would use snap7 block download functions
-        # This is a placeholder for the actual implementation
-        raise NotImplementedError("Block download not yet implemented")
+        if not SNAP7_AVAILABLE:
+            return False
+            
+        try:
+            # Map block type to snap7 type
+            block_type_map = {
+                BlockType.OB: snap7.types.Block.OB,
+                BlockType.FB: snap7.types.Block.FB,
+                BlockType.FC: snap7.types.Block.FC,
+                BlockType.DB: snap7.types.Block.DB,
+            }
+            
+            snap7_type = block_type_map.get(block.info.block_type)
+            if not snap7_type:
+                self._last_error = f"Unsupported block type: {block.info.block_type}"
+                return False
+            
+            if not block.compiled_code:
+                self._last_error = "No compiled code available for block"
+                return False
+            
+            # Use snap7 full_upload to download block
+            # Note: This requires the block data to be in the correct MC7 format
+            result = self._client.full_upload(snap7_type, block.info.number)
+            
+            if result:
+                return True
+            else:
+                self._last_error = "Block download failed"
+                return False
+                
+        except Exception as e:
+            self._last_error = f"Block download error: {e}"
+            return False
 
     def get_block_list(self) -> list[BlockInfo]:
         """Get list of all program blocks"""
