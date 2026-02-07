@@ -41,12 +41,11 @@ Validates your PR and provides feedback on:
 **Errors (must be fixed):**
 - PR title must be at least 10 characters
 - PR description must be at least 50 characters
-- PR template checklist should be filled out
 
 **Warnings (recommendations):**
 - Consider using conventional commit prefixes (`fix:`, `feat:`, `docs:`, `chore:`, `refactor:`, `test:`, `ci:`)
 - Link related issues using `#issue_number` or `Fixes #issue_number`
-- Complete checklist items in the PR template
+- PR template checklist should be filled out (reported as a warning; it does not block merging)
 
 ### 4. Auto-Assign
 **File:** `.github/workflows/auto-assign.yml`
