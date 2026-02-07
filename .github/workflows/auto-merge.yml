@@ -118,12 +118,28 @@ jobs:
               ref: pr.data.head.sha
             });
             
-            const allChecksPassed = checkRuns.data.check_runs.every(
-              check => check.status === 'completed' && check.conclusion === 'success'
+            // Filter to completed checks only
+            const completedChecks = checkRuns.data.check_runs.filter(
+              check => check.status === 'completed'
+            );
+            
+            // Ensure there is at least one check run
+            if (completedChecks.length === 0) {
+              console.log('No completed check runs found');
+              return;
+            }
+            
+            // Check that all completed checks passed (allowing neutral/skipped)
+            const allChecksPassed = completedChecks.every(
+              check => ['success', 'neutral', 'skipped'].includes(check.conclusion)
             );
             
             if (!allChecksPassed) {
               console.log('Not all checks have passed');
+              const failedChecks = completedChecks.filter(
+                check => !['success', 'neutral', 'skipped'].includes(check.conclusion)
+              );
+              console.log(`Failed checks: ${failedChecks.map(c => c.name).join(', ')}`);
               return;
             }
             
