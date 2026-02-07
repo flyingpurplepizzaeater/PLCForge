@@ -12,7 +12,6 @@ on:
     types: [submitted]
   check_suite:
     types: [completed]
-  status: {}
 
 permissions:
   contents: write
@@ -40,7 +39,19 @@ jobs:
                 commit_sha: context.payload.check_suite.head_sha
               });
               if (prs.data.length === 0) return;
-              pr_number = prs.data[0].number;
+              
+              // Prefer an open PR targeting the default branch, then any open PR, then any PR
+              const associatedPrs = prs.data;
+              const openPrs = associatedPrs.filter(pr => pr.state === 'open');
+              let targetPr =
+                openPrs.find(pr => pr.base && pr.base.repo && pr.base.ref === pr.base.repo.default_branch) ||
+                openPrs[0] ||
+                associatedPrs[0];
+              if (!targetPr) {
+                console.log('No suitable PR found for associated commit');
+                return;
+              }
+              pr_number = targetPr.number;
             } else {
               console.log('No PR found in context');
               return;
@@ -118,6 +129,16 @@ jobs:
               ref: pr.data.head.sha
             });
             
+            // Check for any in-progress or queued checks
+            const inProgressChecks = checkRuns.data.check_runs.filter(
+              check => check.status !== 'completed'
+            );
+            
+            if (inProgressChecks.length > 0) {
+              console.log(`${inProgressChecks.length} check(s) still in progress or queued`);
+              return;
+            }
+            
             // Filter to completed checks only
             const completedChecks = checkRuns.data.check_runs.filter(
               check => check.status === 'completed'
@@ -140,6 +161,23 @@ jobs:
                 check => !['success', 'neutral', 'skipped'].includes(check.conclusion)
               );
               console.log(`Failed checks: ${failedChecks.map(c => c.name).join(', ')}`);
+              return;
+            }
+            
+            // Also check legacy status contexts (for non-CheckRun integrations)
+            const combinedStatus = await github.rest.repos.getCombinedStatusForRef({
+              owner,
+              repo,
+              ref: pr.data.head.sha
+            });
+            
+            if (combinedStatus.data.state === 'pending') {
+              console.log('Legacy status checks are still pending');
+              return;
+            }
+            
+            if (combinedStatus.data.state === 'failure' || combinedStatus.data.state === 'error') {
+              console.log(`Legacy status checks failed: ${combinedStatus.data.state}`);
               return;
             }
             

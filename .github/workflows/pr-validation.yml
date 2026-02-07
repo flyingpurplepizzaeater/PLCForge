@@ -5,7 +5,7 @@ name: PR Validation
 
 on:
   pull_request:
-    types: [opened, edited, synchronize, reopened]
+    types: [opened, edited, synchronize, reopened, ready_for_review]
 
 permissions:
   contents: read
@@ -61,7 +61,28 @@ jobs:
             
             // Check if PR is a draft
             if (pr.draft) {
-              console.log('PR is a draft - skipping strict validation');
+              console.log('PR is a draft - skipping strict validation and clearing any existing validation comments');
+              
+              // Remove validation comment if it exists when PR is in draft state
+              const comments = await github.rest.issues.listComments({
+                owner,
+                repo,
+                issue_number: pr_number
+              });
+              
+              const botComments = comments.data.filter(
+                comment => comment.user.type === 'Bot' &&
+                           comment.body.includes('PR Validation Results')
+              );
+              
+              for (const comment of botComments) {
+                await github.rest.issues.deleteComment({
+                  owner,
+                  repo,
+                  comment_id: comment.id
+                });
+              }
+              
               return;
             }
             
