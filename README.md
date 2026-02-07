@@ -34,8 +34,11 @@ cd PLCForge
 # Install in development mode
 pip install -e .
 
-# Or install dependencies directly
-pip install -r requirements.txt
+# Install with dev dependencies (for testing)
+pip install -e ".[dev]"
+
+# Install with GUI testing support (requires display server)
+pip install -e ".[dev,gui]"
 ```
 
 ### Dependencies
@@ -50,6 +53,12 @@ pip install -r requirements.txt
 - `PyQt6` - Desktop GUI
 - `openai` / `anthropic` - AI code generation
 - `cryptography` - Password recovery
+
+**Development:**
+- `pytest` - Testing framework
+- `pytest-qt` - GUI testing (optional, requires display server)
+- `ruff` - Linting
+- `mypy` - Type checking
 
 ## Usage
 
