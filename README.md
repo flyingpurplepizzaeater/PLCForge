@@ -193,7 +193,9 @@ See [LICENSE](LICENSE) file.
 
 ## Contributing
 
-Contributions welcome! Please read the design document in `docs/plans/` before submitting PRs.
+Contributions welcome! Please see:
+- [Pull Request Management Guide](docs/PR_MANAGEMENT.md) - Guidelines for submitting PRs, automated workflows, and best practices
+- Design documents in `docs/plans/` for architecture details
 
 ## Acknowledgments
 

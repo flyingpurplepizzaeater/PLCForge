@@ -1,0 +1,147 @@
+# PR Validation
+# Validates PR format, linked issues, and description completeness
+
+name: PR Validation
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const pr = context.payload.pull_request;
+            const pr_number = pr.number;
+            
+            let validationErrors = [];
+            let validationWarnings = [];
+            
+            // Check PR title format (should not be empty or too short)
+            if (!pr.title || pr.title.trim().length < 10) {
+              validationErrors.push('PR title is too short. Please provide a descriptive title (at least 10 characters).');
+            }
+            
+            // Check if PR title has common prefixes
+            const titlePrefixes = ['fix:', 'feat:', 'docs:', 'chore:', 'refactor:', 'test:', 'ci:'];
+            const hasPrefix = titlePrefixes.some(prefix => pr.title.toLowerCase().startsWith(prefix));
+            if (!hasPrefix) {
+              validationWarnings.push('Consider adding a conventional commit prefix to your PR title (e.g., fix:, feat:, docs:).');
+            }
+            
+            // Check PR description
+            if (!pr.body || pr.body.trim().length < 50) {
+              validationErrors.push('PR description is too short or missing. Please provide a detailed description of your changes.');
+            }
+            
+            // Check if PR links to an issue
+            const issuePattern = /#\d+/g;
+            const linkedIssues = pr.body ? pr.body.match(issuePattern) : null;
+            
+            if (!linkedIssues) {
+              validationWarnings.push('No linked issues found. Consider linking related issues using #issue_number or "Fixes #issue_number".');
+            }
+            
+            // Check if checklist items are completed
+            const checklistPattern = /- \[x\]/gi;
+            const completedItems = pr.body ? pr.body.match(checklistPattern) : null;
+            
+            if (!completedItems || completedItems.length === 0) {
+              validationWarnings.push('No checklist items are marked as completed in the PR template.');
+            }
+            
+            // Check if PR is a draft
+            if (pr.draft) {
+              console.log('PR is a draft - skipping strict validation');
+              return;
+            }
+            
+            // Post validation results as a comment
+            if (validationErrors.length > 0 || validationWarnings.length > 0) {
+              let comment = '## PR Validation Results\n\n';
+              
+              if (validationErrors.length > 0) {
+                comment += '### ❌ Errors\n\n';
+                validationErrors.forEach(error => {
+                  comment += `- ${error}\n`;
+                });
+                comment += '\n';
+              }
+              
+              if (validationWarnings.length > 0) {
+                comment += '### ⚠️ Warnings\n\n';
+                validationWarnings.forEach(warning => {
+                  comment += `- ${warning}\n`;
+                });
+                comment += '\n';
+              }
+              
+              comment += '---\n\n';
+              comment += '*This is an automated validation check. Please address the errors above before requesting review.*';
+              
+              // Check if we already posted a validation comment
+              const comments = await github.rest.issues.listComments({
+                owner,
+                repo,
+                issue_number: pr_number
+              });
+              
+              const botComments = comments.data.filter(
+                comment => comment.user.type === 'Bot' && 
+                           comment.body.includes('PR Validation Results')
+              );
+              
+              if (botComments.length > 0) {
+                // Update existing comment
+                await github.rest.issues.updateComment({
+                  owner,
+                  repo,
+                  comment_id: botComments[0].id,
+                  body: comment
+                });
+              } else {
+                // Create new comment
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number: pr_number,
+                  body: comment
+                });
+              }
+              
+              // Fail the check if there are errors
+              if (validationErrors.length > 0) {
+                core.setFailed(`PR validation failed with ${validationErrors.length} error(s)`);
+              }
+            } else {
+              console.log('✅ PR validation passed!');
+              
+              // Remove validation comment if it exists and all checks pass
+              const comments = await github.rest.issues.listComments({
+                owner,
+                repo,
+                issue_number: pr_number
+              });
+              
+              const botComments = comments.data.filter(
+                comment => comment.user.type === 'Bot' && 
+                           comment.body.includes('PR Validation Results')
+              );
+              
+              for (const comment of botComments) {
+                await github.rest.issues.deleteComment({
+                  owner,
+                  repo,
+                  comment_id: comment.id
+                });
+              }
+            }
