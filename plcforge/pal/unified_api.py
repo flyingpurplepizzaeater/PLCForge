@@ -343,6 +343,8 @@ class UnifiedPLC:
         self._device = device
         self._cache_enabled = False
         self._tag_cache: dict[str, TagValue] = {}
+        self._monitoring_active = False
+        self._monitoring_thread = None
 
     @property
     def device(self) -> PLCDevice:
@@ -486,7 +488,7 @@ class UnifiedPLC:
                     # Read all tags
                     for tag in tags:
                         try:
-                            current = self.read(tag)
+                            current = self._device.read_tag(tag)
                             # Check if value changed
                             if tag not in last_values or last_values[tag].value != current.value:
                                 last_values[tag] = current
