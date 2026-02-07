@@ -446,7 +446,10 @@ class DeltaDVPDriver(PLCDevice):
 
     def get_block(self, block_type: BlockType, number: int) -> Block:
         """Get block - not available via Modbus"""
-        raise NotImplementedError("Block access requires ISPSoft")
+        # Modbus protocol doesn't support block access
+        # This requires ISPSoft for offline project access
+        self._last_error = "Block access not supported via Modbus protocol. Use ISPSoft for project management."
+        raise ValueError(self._last_error)
 
     def start(self) -> bool:
         """Start PLC - limited support"""
