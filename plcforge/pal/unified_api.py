@@ -6,6 +6,7 @@ Automatically handles vendor detection and driver selection.
 """
 
 import socket
+import threading
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any
@@ -37,7 +38,7 @@ class DiscoveredDevice:
     model: str
     name: str | None = None
     mac_address: str | None = None
-    additional_info: dict[str, Any] = None
+    additional_info: dict[str, Any] | None = None
 
 
 class DeviceFactory:
@@ -344,7 +345,7 @@ class UnifiedPLC:
         self._cache_enabled = False
         self._tag_cache: dict[str, TagValue] = {}
         self._monitoring_active = False
-        self._monitoring_thread = None
+        self._monitoring_thread: threading.Thread | None = None
 
     @property
     def device(self) -> PLCDevice:
@@ -479,7 +480,7 @@ class UnifiedPLC:
 
         self._monitoring_active = True
         self._monitoring_thread = None
-        last_values = {}
+        last_values: dict[str, TagValue] = {}
 
         def monitor_loop():
             """Background thread for tag monitoring"""
