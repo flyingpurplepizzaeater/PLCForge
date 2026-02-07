@@ -1,0 +1,152 @@
+# Auto Merge PRs
+# Automatically merges PRs when all requirements are met:
+# - All required checks pass
+# - PR is approved by required reviewers
+# - No requested changes
+# - Auto-merge is enabled on the PR
+
+name: Auto Merge
+
+on:
+  pull_request_review:
+    types: [submitted]
+  check_suite:
+    types: [completed]
+  status: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Auto-merge approved PRs
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            
+            // Get PR number from context
+            let pr_number;
+            if (context.payload.pull_request) {
+              pr_number = context.payload.pull_request.number;
+            } else if (context.payload.check_suite) {
+              // For check_suite events, get PRs associated with the commit
+              const prs = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                owner,
+                repo,
+                commit_sha: context.payload.check_suite.head_sha
+              });
+              if (prs.data.length === 0) return;
+              pr_number = prs.data[0].number;
+            } else {
+              console.log('No PR found in context');
+              return;
+            }
+            
+            // Get PR details
+            const pr = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number: pr_number
+            });
+            
+            console.log(`Checking PR #${pr_number}: ${pr.data.title}`);
+            
+            // Skip if PR is closed or merged
+            if (pr.data.state !== 'open') {
+              console.log('PR is not open, skipping');
+              return;
+            }
+            
+            // Skip if PR is a draft
+            if (pr.data.draft) {
+              console.log('PR is a draft, skipping');
+              return;
+            }
+            
+            // Skip if auto-merge is not enabled
+            if (!pr.data.auto_merge) {
+              console.log('Auto-merge is not enabled on this PR');
+              return;
+            }
+            
+            // Get reviews
+            const reviews = await github.rest.pulls.listReviews({
+              owner,
+              repo,
+              pull_number: pr_number
+            });
+            
+            // Check for approval and no requested changes
+            let hasApproval = false;
+            let hasRequestedChanges = false;
+            
+            // Group reviews by reviewer (latest review wins)
+            const latestReviewsByUser = {};
+            for (const review of reviews.data) {
+              if (!latestReviewsByUser[review.user.login] || 
+                  new Date(review.submitted_at) > new Date(latestReviewsByUser[review.user.login].submitted_at)) {
+                latestReviewsByUser[review.user.login] = review;
+              }
+            }
+            
+            for (const review of Object.values(latestReviewsByUser)) {
+              if (review.state === 'APPROVED') {
+                hasApproval = true;
+              } else if (review.state === 'CHANGES_REQUESTED') {
+                hasRequestedChanges = true;
+              }
+            }
+            
+            if (hasRequestedChanges) {
+              console.log('PR has requested changes, not merging');
+              return;
+            }
+            
+            if (!hasApproval) {
+              console.log('PR is not approved, not merging');
+              return;
+            }
+            
+            // Check if all required status checks pass
+            const checkRuns = await github.rest.checks.listForRef({
+              owner,
+              repo,
+              ref: pr.data.head.sha
+            });
+            
+            const allChecksPassed = checkRuns.data.check_runs.every(
+              check => check.status === 'completed' && check.conclusion === 'success'
+            );
+            
+            if (!allChecksPassed) {
+              console.log('Not all checks have passed');
+              return;
+            }
+            
+            // All conditions met, merge the PR
+            console.log('All conditions met, merging PR...');
+            
+            try {
+              await github.rest.pulls.merge({
+                owner,
+                repo,
+                pull_number: pr_number,
+                merge_method: pr.data.auto_merge.merge_method || 'squash'
+              });
+              
+              console.log(`✅ PR #${pr_number} merged successfully!`);
+              
+              // Add a comment
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: pr_number,
+                body: '🎉 This PR has been automatically merged as all checks passed and required approvals were received!'
+              });
+            } catch (error) {
+              console.log(`Failed to merge PR: ${error.message}`);
+            }

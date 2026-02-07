@@ -1,0 +1,39 @@
+# CODEOWNERS file
+# Defines code ownership for automatic PR review assignments
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for everything
+* @flyingpurplepizzaeater
+
+# Driver-specific ownership
+/plcforge/drivers/siemens/ @flyingpurplepizzaeater
+/plcforge/drivers/allen_bradley/ @flyingpurplepizzaeater
+/plcforge/drivers/delta/ @flyingpurplepizzaeater
+/plcforge/drivers/omron/ @flyingpurplepizzaeater
+/plcforge/drivers/beckhoff/ @flyingpurplepizzaeater
+/plcforge/drivers/mitsubishi/ @flyingpurplepizzaeater
+/plcforge/drivers/schneider/ @flyingpurplepizzaeater
+
+# GUI and themes
+/plcforge/gui/ @flyingpurplepizzaeater
+
+# Security and recovery features
+/plcforge/recovery/ @flyingpurplepizzaeater
+/plcforge/security/ @flyingpurplepizzaeater
+
+# AI code generation
+/plcforge/ai/ @flyingpurplepizzaeater
+
+# Protocol Abstraction Layer
+/plcforge/pal/ @flyingpurplepizzaeater
+
+# Tests
+/tests/ @flyingpurplepizzaeater
+
+# Documentation
+*.md @flyingpurplepizzaeater
+/docs/ @flyingpurplepizzaeater
+
+# CI/CD and GitHub workflows
+/.github/ @flyingpurplepizzaeater
+/pyproject.toml @flyingpurplepizzaeater
