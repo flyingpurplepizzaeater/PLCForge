@@ -458,7 +458,7 @@ class UnifiedPLC:
 
         Args:
             tags: List of tag names to monitor
-            callback: Function to call when values change. 
+            callback: Function to call when values change.
                      Signature: callback(tag_name: str, value: TagValue)
             interval_ms: Polling interval in milliseconds (default 100ms)
 
@@ -491,10 +491,10 @@ class UnifiedPLC:
                             if tag not in last_values or last_values[tag].value != current.value:
                                 last_values[tag] = current
                                 callback(tag, current)
-                        except Exception as e:
+                        except Exception:
                             # Continue monitoring other tags on error
                             pass
-                    
+
                     # Sleep for interval
                     time.sleep(interval_ms / 1000.0)
                 except Exception:

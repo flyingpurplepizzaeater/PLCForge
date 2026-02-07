@@ -416,14 +416,14 @@ class PLCForgeMainWindow(QMainWindow):
             project_name = dialog.name_input.text()
             project_path = dialog.path_input.text()
             vendor = dialog.vendor_combo.currentText().lower()
-            
+
             # Create project directory
             full_path = Path(project_path) / project_name
             try:
                 full_path.mkdir(parents=True, exist_ok=True)
                 (full_path / "src").mkdir(exist_ok=True)
                 (full_path / "backup").mkdir(exist_ok=True)
-                
+
                 # Create project metadata file
                 import json
                 project_info = {
@@ -434,7 +434,7 @@ class PLCForgeMainWindow(QMainWindow):
                 }
                 with open(full_path / "project.json", "w") as f:
                     json.dump(project_info, f, indent=2)
-                
+
                 self._current_project = full_path
                 self.statusbar.showMessage(f"Created project: {project_name}")
                 self._populate_project_tree()
@@ -462,7 +462,7 @@ class PLCForgeMainWindow(QMainWindow):
         """Load a project file"""
         try:
             file_path_obj = Path(file_path)
-            
+
             # Check if it's a project directory or file
             if file_path_obj.is_dir():
                 project_dir = file_path_obj
@@ -472,7 +472,7 @@ class PLCForgeMainWindow(QMainWindow):
                 # It's a PLC project file - parse it
                 self._parse_plc_project_file(file_path)
                 return
-            
+
             # Load project metadata
             project_file = project_dir / "project.json"
             if project_file.exists():
@@ -487,12 +487,12 @@ class PLCForgeMainWindow(QMainWindow):
                 self.statusbar.showMessage(f"Loaded: {file_path}")
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to load project: {e}")
-            
+
     def _parse_plc_project_file(self, file_path: str):
         """Parse vendor-specific PLC project files"""
         file_path_obj = Path(file_path)
         suffix = file_path_obj.suffix.lower()
-        
+
         try:
             if suffix in ['.ap13', '.ap14', '.ap15', '.ap16', '.ap17', '.ap18', '.ap19', '.ap20']:
                 # TIA Portal project
@@ -516,14 +516,14 @@ class PLCForgeMainWindow(QMainWindow):
         if not self._current_project:
             QMessageBox.warning(self, "No Project", "No project is currently open.")
             return
-            
+
         try:
             # Save current editor content
             code_file = self._current_project / "src" / "main.st"
             code_file.parent.mkdir(parents=True, exist_ok=True)
             with open(code_file, "w") as f:
                 f.write(self.code_editor.toPlainText())
-            
+
             # Update project metadata
             project_file = self._current_project / "project.json"
             if project_file.exists():
@@ -533,7 +533,7 @@ class PLCForgeMainWindow(QMainWindow):
                 project_info["modified"] = str(datetime.now())
                 with open(project_file, "w") as f:
                     json.dump(project_info, f, indent=2)
-            
+
             self.statusbar.showMessage(f"Saved project: {self._current_project.name}")
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to save project: {e}")
@@ -606,7 +606,7 @@ class PLCForgeMainWindow(QMainWindow):
         try:
             # Get the first connected device
             plc = list(self._connected_devices.values())[0]
-            
+
             # Show progress dialog
             progress = QMessageBox(self)
             progress.setWindowTitle("Upload Program")
@@ -614,29 +614,29 @@ class PLCForgeMainWindow(QMainWindow):
             progress.setStandardButtons(QMessageBox.StandardButton.NoButton)
             progress.show()
             QApplication.processEvents()
-            
+
             # Upload program
             program = plc.upload_program()
-            
+
             # Display in editor
             editor_text = f"# Uploaded from {plc.info.vendor} {plc.info.model}\n"
             editor_text += f"# Firmware: {plc.info.firmware}\n\n"
-            
+
             if program.blocks:
                 editor_text += f"# Program Blocks ({len(program.blocks)})\n"
                 for block in program.blocks[:10]:  # Show first 10 blocks
                     editor_text += f"# - {block.info.name} ({block.info.block_type.value})\n"
-            
+
             if program.tags:
                 editor_text += f"\n# Tags ({len(program.tags)})\n"
                 for tag in program.tags[:20]:  # Show first 20 tags
                     editor_text += f"# - {tag.name}: {tag.data_type} = {tag.value}\n"
-            
+
             self.code_editor.setText(editor_text)
-            
+
             progress.close()
             self.statusbar.showMessage(f"Uploaded {len(program.blocks)} blocks, {len(program.tags)} tags")
-            
+
         except Exception as e:
             QMessageBox.critical(self, "Upload Failed", f"Failed to upload program: {e}")
             self.statusbar.showMessage("Upload failed")
@@ -655,20 +655,20 @@ class PLCForgeMainWindow(QMainWindow):
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No
         )
-        
+
         if reply != QMessageBox.StandardButton.Yes:
             return
-            
+
         try:
             plc = list(self._connected_devices.values())[0]
-            
+
             # Create a minimal program structure
             from plcforge.drivers.base import PLCProgram
             program = PLCProgram(
                 vendor=plc.info.vendor,
                 model=plc.info.model
             )
-            
+
             # Show progress
             progress = QMessageBox(self)
             progress.setWindowTitle("Download Program")
@@ -676,12 +676,12 @@ class PLCForgeMainWindow(QMainWindow):
             progress.setStandardButtons(QMessageBox.StandardButton.NoButton)
             progress.show()
             QApplication.processEvents()
-            
+
             # Attempt download
             success = plc.download_program(program)
-            
+
             progress.close()
-            
+
             if success:
                 QMessageBox.information(self, "Success", "Program downloaded successfully")
                 self.statusbar.showMessage("Download successful")
@@ -693,7 +693,7 @@ class PLCForgeMainWindow(QMainWindow):
                     f"Last error: {plc.last_error or 'Unknown'}"
                 )
                 self.statusbar.showMessage("Download not fully supported")
-                
+
         except Exception as e:
             QMessageBox.critical(self, "Download Failed", f"Failed to download program: {e}")
             self.statusbar.showMessage("Download failed")
@@ -734,24 +734,24 @@ class PLCForgeMainWindow(QMainWindow):
 
         self.ai_output.setText("Generating code...")
         QApplication.processEvents()
-        
+
         try:
             # Try to use AI code generator if API keys are available
             import os
             from plcforge.ai.code_generator import AICodeGenerator, CodeTarget
             from plcforge.drivers.base import Vendor, CodeLanguage
-            
+
             # Check for API keys
             openai_key = os.getenv('OPENAI_API_KEY')
             anthropic_key = os.getenv('ANTHROPIC_API_KEY')
-            
+
             if openai_key or anthropic_key:
                 # Use real AI generation
                 provider = "openai" if openai_key else "anthropic"
                 api_key = openai_key or anthropic_key
-                
+
                 generator = AICodeGenerator(provider=provider, api_key=api_key)
-                
+
                 # Determine target based on connected PLC or default to Siemens
                 if self._connected_devices:
                     plc = list(self._connected_devices.values())[0]
@@ -761,42 +761,42 @@ class PLCForgeMainWindow(QMainWindow):
                 else:
                     vendor = Vendor.SIEMENS
                     model = "S7-1500"
-                
+
                 target = CodeTarget(
                     vendor=vendor,
                     model=model,
                     language=CodeLanguage.STRUCTURED_TEXT
                 )
-                
+
                 result = generator.generate(
                     prompt=prompt,
                     target=target,
                     safety_check=True
                 )
-                
+
                 output = result.code
                 if result.explanation:
                     output += f"\n\n// Explanation:\n// {result.explanation}"
                 if result.safety_issues:
-                    output += f"\n\n// SAFETY WARNINGS:\n"
+                    output += "\n\n// SAFETY WARNINGS:\n"
                     for issue in result.safety_issues:
                         output += f"// - {issue}\n"
-                
+
                 self.ai_output.setText(output)
                 self.statusbar.showMessage("Code generated successfully")
             else:
                 # Fallback to template-based generation
                 self._generate_template_code(prompt)
-                
-        except Exception as e:
+
+        except Exception:
             # Fallback to template
             self._generate_template_code(prompt)
-            self.statusbar.showMessage(f"Using template code (AI unavailable)")
-            
+            self.statusbar.showMessage("Using template code (AI unavailable)")
+
     def _generate_template_code(self, prompt: str):
         """Generate template code when AI is unavailable"""
         prompt_lower = prompt.lower()
-        
+
         # Simple keyword matching for common patterns
         if "motor" in prompt_lower or "conveyor" in prompt_lower:
             code = """
@@ -868,10 +868,10 @@ END_VAR
 // Add your code here
 // Use standard IEC 61131-3 syntax
 
-// Note: Set OPENAI_API_KEY or ANTHROPIC_API_KEY environment 
+// Note: Set OPENAI_API_KEY or ANTHROPIC_API_KEY environment
 // variable to enable AI-powered code generation
 """
-        
+
         self.ai_output.setText(code)
 
     def _explain_code(self):
@@ -879,28 +879,27 @@ END_VAR
         code = self.code_editor.textCursor().selectedText()
         if not code:
             code = self.code_editor.toPlainText()
-            
+
         if not code or not code.strip():
             QMessageBox.information(self, "No Code", "No code to explain. Please write or select some code.")
             return
-            
+
         try:
             import os
             from plcforge.ai.code_generator import AICodeGenerator
-            
+
             # Check for API keys
             openai_key = os.getenv('OPENAI_API_KEY')
             anthropic_key = os.getenv('ANTHROPIC_API_KEY')
-            
+
             if openai_key or anthropic_key:
                 provider = "openai" if openai_key else "anthropic"
                 api_key = openai_key or anthropic_key
-                
-                generator = AICodeGenerator(provider=provider, api_key=api_key)
-                
+
+                AICodeGenerator(provider=provider, api_key=api_key)
+
                 # Generate explanation using the LLM directly
-                explanation_prompt = f"Explain this PLC code in detail:\n\n{code}"
-                
+
                 # Simple explanation - we'd call the LLM here
                 explanation = "Code Explanation:\n\n"
                 explanation += "This code implements PLC logic using IEC 61131-3 standard.\n\n"
@@ -909,7 +908,7 @@ END_VAR
                 explanation += "- Logic uses IF/THEN/ELSE control structures\n"
                 explanation += "- Boolean operations control outputs\n\n"
                 explanation += "For detailed AI-powered explanations, the OpenAI/Anthropic API must be configured."
-                
+
                 QMessageBox.information(self, "Code Explanation", explanation)
             else:
                 # Basic static explanation
@@ -920,7 +919,7 @@ END_VAR
                     "Set OPENAI_API_KEY or ANTHROPIC_API_KEY environment variable.\n\n"
                     "Selected code:\n" + code[:200] + ("..." if len(code) > 200 else "")
                 )
-                
+
         except Exception as e:
             QMessageBox.warning(self, "Error", f"Failed to explain code: {e}")
 
@@ -930,15 +929,14 @@ END_VAR
         if not code or not code.strip():
             QMessageBox.information(self, "No Code", "No code to optimize.")
             return
-            
+
         try:
             import os
-            from plcforge.ai.code_generator import AICodeGenerator
-            
+
             # Check for API keys
             openai_key = os.getenv('OPENAI_API_KEY')
             anthropic_key = os.getenv('ANTHROPIC_API_KEY')
-            
+
             if openai_key or anthropic_key:
                 reply = QMessageBox.question(
                     self,
@@ -948,10 +946,10 @@ END_VAR
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                     QMessageBox.StandardButton.No
                 )
-                
+
                 if reply != QMessageBox.StandardButton.Yes:
                     return
-                
+
                 # Show progress
                 progress = QMessageBox(self)
                 progress.setWindowTitle("Optimizing Code")
@@ -959,11 +957,11 @@ END_VAR
                 progress.setStandardButtons(QMessageBox.StandardButton.NoButton)
                 progress.show()
                 QApplication.processEvents()
-                
+
                 # Here we would call AI to optimize
                 # For now, show message
                 progress.close()
-                
+
                 QMessageBox.information(
                     self,
                     "Code Optimization",
@@ -981,7 +979,7 @@ END_VAR
                     "Code optimization requires OpenAI or Anthropic API keys.\n\n"
                     "Set OPENAI_API_KEY or ANTHROPIC_API_KEY environment variable."
                 )
-                
+
         except Exception as e:
             QMessageBox.warning(self, "Error", f"Failed to optimize code: {e}")
 
@@ -1059,7 +1057,7 @@ class NewProjectDialog(QDialog):
         default_path = str(Path.home() / '.plcforge' / 'projects')
         self.path_input.setText(default_path)
         path_layout.addWidget(self.path_input)
-        
+
         browse_btn = QPushButton("Browse...")
         browse_btn.clicked.connect(self._browse_path)
         path_layout.addWidget(browse_btn)
