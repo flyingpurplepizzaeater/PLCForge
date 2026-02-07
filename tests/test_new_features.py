@@ -89,12 +89,14 @@ class TestThemeManager:
 
     def test_import_theme_manager(self):
         """Test importing ThemeManager"""
+        pytest.importorskip("PyQt6.QtGui", reason="PyQt6 not available (requires display server)", exc_type=ImportError)
         from plcforge.gui.themes import ThemeManager, Theme
         assert ThemeManager is not None
         assert Theme is not None
 
     def test_theme_enum_values(self):
         """Test Theme enum has expected values"""
+        pytest.importorskip("PyQt6.QtGui", reason="PyQt6 not available (requires display server)", exc_type=ImportError)
         from plcforge.gui.themes import Theme
         assert Theme.LIGHT.value == "light"
         assert Theme.DARK.value == "dark"
@@ -106,16 +108,19 @@ class TestSyntaxHighlighters:
 
     def test_import_structured_text_highlighter(self):
         """Test importing StructuredTextHighlighter"""
+        pytest.importorskip("PyQt6.QtGui", reason="PyQt6 not available (requires display server)", exc_type=ImportError)
         from plcforge.gui.themes import StructuredTextHighlighter
         assert StructuredTextHighlighter is not None
 
     def test_import_ladder_highlighter(self):
         """Test importing LadderHighlighter"""
+        pytest.importorskip("PyQt6.QtGui", reason="PyQt6 not available (requires display server)", exc_type=ImportError)
         from plcforge.gui.themes import LadderHighlighter
         assert LadderHighlighter is not None
 
     def test_import_instruction_list_highlighter(self):
         """Test importing InstructionListHighlighter"""
+        pytest.importorskip("PyQt6.QtGui", reason="PyQt6 not available (requires display server)", exc_type=ImportError)
         from plcforge.gui.themes import InstructionListHighlighter
         assert InstructionListHighlighter is not None
 
